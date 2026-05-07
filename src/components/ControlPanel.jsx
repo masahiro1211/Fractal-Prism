@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useFractalAnimation } from "../hooks/useFractalAnimation";
-import { color, shape, pageStyles } from "../styles/pageStyles";
+import { useTheme } from "../styles/pageStyles";
 
 function useIsMobile(breakpoint = 600) {
   const [isMobile, setIsMobile] = useState(
@@ -16,66 +16,6 @@ function useIsMobile(breakpoint = 600) {
   return isMobile;
 }
 
-/* =========================
-   スタイル定義
-   ========================= */
-
-const base = {
-  panel: {
-    position: "absolute",
-    background: color.bgOverlay,
-    color: color.textPrimary,
-    borderRadius: shape.radiusMd,
-    border: `1px solid ${color.borderDefault}`,
-    zIndex: 10,
-    fontFamily: "sans-serif",
-    maxWidth: "calc(100vw - 32px)",
-  },
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: 12,
-    paddingBottom: 8,
-    borderBottom: `1px solid ${color.borderSubtle}`,
-  },
-  row: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: 12,
-  },
-  input: {
-    background: color.bgPanel,
-    border: `1px solid ${color.borderDefault}`,
-    borderRadius: shape.radiusSm,
-    color: color.textPrimary,
-    textAlign: "right",
-  },
-};
-
-const desktop = {
-  panel:  { ...base.panel,  top: 16, left: 16, padding: "12px 14px", fontSize: 13 },
-  header: { ...base.header, marginBottom: 10 },
-  row:    { ...base.row,    marginBottom: 8 },
-  label:  { color: color.textSecondary, fontSize: 12 },
-  input:  { ...base.input,  width: 72, padding: "3px 8px", fontSize: 13 },
-  button: { ...pageStyles.primaryButton, padding: "7px 12px", fontSize: 12 },
-  buttonRow: { display: "flex", gap: 6, marginBottom: 12, flexWrap: "wrap" },
-  link:   { ...pageStyles.outlineButton, padding: "6px 12px", fontSize: 12, display: "inline-block", textDecoration: "none" },
-};
-
-const mobile = {
-  panel:  { ...base.panel,  top: 12, left: 12, padding: "8px 10px", fontSize: 12 },
-  header: { ...base.header, marginBottom: 8 },
-  row:    { ...base.row,    marginBottom: 6 },
-  label:  { color: color.textSecondary, fontSize: 11 },
-  input:  { ...base.input,  width: 60, padding: "2px 6px", fontSize: 12 },
-  button: { ...pageStyles.primaryButton, padding: "5px 9px", fontSize: 11 },
-  buttonRow: { display: "flex", gap: 4, marginBottom: 10, flexWrap: "wrap" },
-  link:   { ...pageStyles.outlineButton, padding: "4px 10px", fontSize: 11, display: "inline-block", textDecoration: "none" },
-};
-
 /**
  * フラクタル生成の共通コントロールパネル。
  * ステップアニメーション制御、パラメータ入力、ワイヤーフレーム切り替えを提供する。
@@ -89,6 +29,67 @@ export default function ControlPanel({
   enableWireframe = true,
   children,
 }) {
+
+  /* =========================
+   スタイル定義
+   ========================= */
+  const { color, shape, pageStyles } = useTheme();
+  const base = {
+    panel: {
+      position: "absolute",
+      background: color.cpOverlay,
+      color: color.cpText,
+      borderRadius: shape.radiusMd,
+      border: `1px solid ${color.cpBorder}`,
+      zIndex: 10,
+      fontFamily: "sans-serif",
+      maxWidth: "calc(100vw - 32px)",
+    },
+    header: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      gap: 12,
+      paddingBottom: 8,
+      borderBottom: `1px solid ${color.cpSubtle}`,
+    },
+    row: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      gap: 12,
+    },
+    input: {
+      background: color.bgPanel,
+      border: `1px solid ${color.cpBorder}`,
+      borderRadius: shape.radiusSm,
+      color: color.cpText,
+      textAlign: "right",
+    },
+  };
+
+  const desktop = {
+    panel:  { ...base.panel,  top: 16, left: 16, padding: "12px 14px", fontSize: 13 },
+    header: { ...base.header, marginBottom: 10 },
+    row:    { ...base.row,    marginBottom: 8 },
+    label:  { color: color.cpText, fontSize: 12 },
+    input:  { ...base.input,  width: 72, padding: "3px 8px", fontSize: 13 },
+    button: { ...pageStyles.primaryButton, padding: "7px 12px", fontSize: 12 },
+    buttonRow: { display: "flex", gap: 6, marginBottom: 12, flexWrap: "wrap" },
+    link:   { ...pageStyles.outlineButton, padding: "6px 12px", fontSize: 12, display: "inline-block", textDecoration: "none" },
+  };
+
+  const mobile = {
+    panel:  { ...base.panel,  top: 12, left: 12, padding: "8px 10px", fontSize: 12 },
+    header: { ...base.header, marginBottom: 8 },
+    row:    { ...base.row,    marginBottom: 6 },
+    label:  { color: color.cpText, fontSize: 11 },
+    input:  { ...base.input,  width: 60, padding: "2px 6px", fontSize: 12 },
+    button: { ...pageStyles.primaryButton, padding: "5px 9px", fontSize: 11 },
+    buttonRow: { display: "flex", gap: 4, marginBottom: 10, flexWrap: "wrap" },
+    link:   { ...pageStyles.outlineButton, padding: "4px 10px", fontSize: 11, display: "inline-block", textDecoration: "none" },
+  };
+
   const [targetDepth, setTargetDepth] = useState(defaultDepth);
   const [stepInterval, setStepInterval] = useState(defaultInterval);
   const [wireframe, setWireframe] = useState(false);
@@ -113,7 +114,7 @@ export default function ControlPanel({
         {/* ヘッダー */}
         <div style={s.header}>
           <strong>フラクタル生成</strong>
-          <span style={{ color: color.textSecondary, whiteSpace: "nowrap" }}>
+          <span style={{ color: color.cpText, whiteSpace: "nowrap" }}>
             ステップ {currentDepth} / {targetDepth}
             {isPlaying ? " ▶" : isFinished ? " ■" : " ⏸"}
           </span>
@@ -153,9 +154,9 @@ export default function ControlPanel({
             disabled={isPlaying}
             style={{
               ...s.button,
-              background: isPlaying ? color.bgPanel : color.teal,
-              color: isPlaying ? color.textMuted : "#fff",
-              border: isPlaying ? `1px solid ${color.borderDefault}` : "none",
+              background: isPlaying ? color.cpInput : color.teal,
+              color: isPlaying ? color.cpText : color.cpTextin,
+              border: isPlaying ? `1px solid ${color.cpBorder}` : "none",
             }}
           >
             生成スタート
@@ -165,9 +166,9 @@ export default function ControlPanel({
             disabled={isFinished && !isPlaying}
             style={{
               ...s.button,
-              background: isFinished && !isPlaying ? color.bgPanel : color.amber,
-              color: isFinished && !isPlaying ? color.textMuted : "#1a1200",
-              border: isFinished && !isPlaying ? `1px solid ${color.borderDefault}` : "none",
+              background: isFinished && !isPlaying ? color.cpInput : color.cpResume,
+              color: isFinished && !isPlaying ? color.cpTextin : color.cpText,
+              border: isFinished && !isPlaying ? `1px solid ${color.cpBorder}` : "none",
             }}
           >
             {isPlaying ? "一時停止" : "再開"}
@@ -177,7 +178,7 @@ export default function ControlPanel({
             style={{
               ...s.button,
               background: "rgba(220, 60, 80, 0.85)",
-              color: "#fff",
+              color: color.cpTextin,
               border: "none",
             }}
           >
@@ -187,7 +188,7 @@ export default function ControlPanel({
 
         {/* オプション */}
         {enableWireframe && (
-          <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", color: color.textSecondary, fontSize: s.label.fontSize }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", color: color.cpText, fontSize: s.label.fontSize }}>
             <input
               type="checkbox"
               checked={wireframe}

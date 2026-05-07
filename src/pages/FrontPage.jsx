@@ -1,6 +1,8 @@
 import { useNavigate } from 'react-router-dom'
 import BottomBar from '../components/BottomBar'
-import { pageStyles, color } from '../styles/pageStyles'
+import { useTheme } from '../styles/pageStyles'
+import LDtoggle from '../components/LDtoggleButton'
+
 
 /**
  * フロントページ（ステップ 1/4）
@@ -10,9 +12,35 @@ import { pageStyles, color } from '../styles/pageStyles'
  */
 export default function FrontPage() {
   const navigate = useNavigate()
+  const { pageStyles, color, theme, toggleTheme } = useTheme()
+
+  // ── スタイル定数 (clor参照)─────────────────────────────────────────────
+
+  const pageStyle = {
+    height: '100vh',      
+    overflow: 'hidden',
+    display: 'flex',
+    flexDirection: 'column',
+    background: color.bgPage,
+    color: color.textPrimary,
+    fontFamily: 'sans-serif',
+  }
+
+  const eyebrowStyle = {
+    fontSize: 12,
+    fontWeight: 500,
+    letterSpacing: '0.1em',
+    color: color.purple,
+    textTransform: 'uppercase',
+  }
+
+
+//──────────────────────────────────────────────────────────────────
 
   return (
     <main style={pageStyle}>
+       {/* テーマトグルボタン */}
+          { <LDtoggle /> }
       <div style={scrollAreaStyle}>
         <section style={pageStyles.panel}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 10 }}>
@@ -37,17 +65,7 @@ export default function FrontPage() {
   )
 }
 
-// ── スタイル定数 ─────────────────────────────────────────────
-
-const pageStyle = {
-  height: '100vh',      // ビューポートに固定することでBottomBarが常に下端に留まる
-  overflow: 'hidden',
-  display: 'flex',
-  flexDirection: 'column',
-  background: color.bgPage,
-  color: color.textPrimary,
-  fontFamily: 'sans-serif',
-}
+// ── スタイル定数 (color非参照)─────────────────────────────────────────────
 
 const scrollAreaStyle = {
   flex: 1,
@@ -56,12 +74,4 @@ const scrollAreaStyle = {
   justifyContent: 'center',
   alignItems: 'center',
   padding: 24,
-}
-
-const eyebrowStyle = {
-  fontSize: 12,
-  fontWeight: 500,
-  letterSpacing: '0.1em',
-  color: color.purple,
-  textTransform: 'uppercase',
 }
