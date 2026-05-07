@@ -1,20 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useFractalAnimation } from "../hooks/useFractalAnimation";
+import { useIsMobile } from "../hooks/useIsMobile";
 import { useTheme } from "../styles/pageStyles";
-
-function useIsMobile(breakpoint = 600) {
-  const [isMobile, setIsMobile] = useState(
-    () => window.innerWidth < breakpoint
-  );
-  useEffect(() => {
-    const mq = window.matchMedia(`(max-width: ${breakpoint - 1}px)`);
-    const update = (e) => setIsMobile(e.matches);
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, [breakpoint]);
-  return isMobile;
-}
 
 /**
  * フラクタル生成の共通コントロールパネル。
