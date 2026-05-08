@@ -3,6 +3,7 @@ import { OrbitControls } from "@react-three/drei";
 import { useMemo, useRef, useEffect, useState } from "react";
 import * as THREE from "three";
 import ControlPanel from "../../components/ControlPanel";
+import PanelCheckbox from "../../components/PanelCheckbox";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { color, shape } from "../../styles/pageStyles";
 import { vertexShader, fragmentShader } from "./mandelbulbShader";
@@ -40,9 +41,9 @@ const mobilePanel = {
  * カメラ操作は OrbitControls に任せ、シェーダ側は cameraPosition と
  * 各フラグメントの worldPos からレイを再構築する。
  *
- * @param {{ power: number, bailout: number, maxIterCap: number }} props
+ * @param {{ power: number, bailout: number, maxIterCap: number, shadow: boolean }} props
  */
-function MandelbulbBackground({ power, bailout, maxIterCap }) {
+function MandelbulbBackground({ power, bailout, maxIterCap, shadow }) {
   const matRef = useRef(null);
   const elapsedRef = useRef(0);
   const growStartRef = useRef(0);
@@ -54,6 +55,7 @@ function MandelbulbBackground({ power, bailout, maxIterCap }) {
       uPower: { value: 8.0 },
       uBailout: { value: 4.0 },
       uMaxIterF: { value: 2.0 },
+      uShadow: { value: 0.0 },
     }),
     []
   );
@@ -68,6 +70,7 @@ function MandelbulbBackground({ power, bailout, maxIterCap }) {
     material.uniforms.uPower.value = power;
     material.uniforms.uBailout.value = bailout;
     material.uniforms.uMaxIterF.value = maxIterCap;
+    material.uniforms.uShadow.value = shadow ? 1.0 : 0.0;
 
     const grow = THREE.MathUtils.clamp((t - growStartRef.current) / 2.5, 0, 1);
     material.uniforms.uGrow.value = grow;
@@ -142,6 +145,7 @@ function MandelbulbBackground({ power, bailout, maxIterCap }) {
 export default function Mandelbulb() {
   const [power, setPower] = useState(8);
   const [bailout, setBailout] = useState(4);
+  const [shadow, setShadow] = useState(false);
   const isMobile = useIsMobile();
   const s = isMobile ? mobilePanel : desktopPanel;
 
@@ -150,6 +154,9 @@ export default function Mandelbulb() {
       maxDepth={24}
       defaultDepth={14}
       defaultInterval={250}
+      extraControls={
+        <PanelCheckbox label="影をつける" checked={shadow} onChange={setShadow} />
+      }
     >
       {({ currentDepth }) => (
         <>
@@ -198,6 +205,7 @@ export default function Mandelbulb() {
               power={power}
               bailout={bailout}
               maxIterCap={Math.max(2, currentDepth)}
+              shadow={shadow}
             />
             <OrbitControls
               enableDamping
