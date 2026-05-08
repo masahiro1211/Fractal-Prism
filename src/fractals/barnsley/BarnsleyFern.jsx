@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import FractalScene from "../../components/FractalScene";
 import ControlPanel from "../../components/ControlPanel";
@@ -155,22 +156,74 @@ function generatePositions(depth, transforms) {
  * バーンズリーのシダの点群コンポーネント。
  * depth が 0 の場合は描画をスキップする。
  *
+ * 1フレームごとに setDrawRange で表示点数を増やし、カオスゲームの軌跡が
+ * 順に描画されていく演出を行う。最新の点位置にはヘッドマーカーを置く。
+ *
  * @param {{ depth: number, transforms: object[] }} props
  */
 function BarnsleyFernPoints({ depth, transforms }) {
+  const positions = useMemo(
+    () => generatePositions(Math.max(depth, 1), transforms),
+    [depth, transforms]
+  );
+
+  const visibleCountRef = useRef(0);
+  const headRef = useRef(null);
+
+  // 形を変えたとき（変換が変わったとき）は最初から描き直す
+  useEffect(() => {
+    visibleCountRef.current = 0;
+  }, [transforms]);
+
+  // ControlPanel のリセット（depth=0）でも先頭から描き直す
+  useEffect(() => {
+    if (depth <= 0) visibleCountRef.current = 0;
+  }, [depth]);
+
+  // depth 変更時は新しい BufferGeometry を作る
   const geometry = useMemo(() => {
-    const positions = generatePositions(depth, transforms);
     const geom = new THREE.BufferGeometry();
     geom.setAttribute("position", new THREE.BufferAttribute(positions, 3));
     return geom;
-  }, [depth, transforms]);
+  }, [positions]);
+
+  // 新しい geometry の drawRange を、前の表示点数に揃えてから描画させる
+  // （depth が増えたときにフラッシュせず、前回の続きから伸びていくようにするため）
+  useLayoutEffect(() => {
+    const totalPoints = positions.length / 3;
+    if (visibleCountRef.current > totalPoints) {
+      visibleCountRef.current = totalPoints;
+    }
+    geometry.setDrawRange(0, visibleCountRef.current);
+  }, [geometry, positions]);
+
+  // 毎フレーム: 表示点数を進めてヘッドマーカーを最新位置に移動する
+  useFrame(() => {
+    const totalPoints = positions.length / 3;
+    if (visibleCountRef.current < totalPoints) {
+      // 小さい depth では1フレーム数点ずつ、大きい depth では多めに進める
+      const step = Math.max(5, Math.floor(totalPoints / 180));
+      visibleCountRef.current = Math.min(totalPoints, visibleCountRef.current + step);
+      geometry.setDrawRange(0, visibleCountRef.current);
+    }
+    if (headRef.current && visibleCountRef.current > 0) {
+      const i = (visibleCountRef.current - 1) * 3;
+      headRef.current.position.set(positions[i], positions[i + 1], positions[i + 2]);
+    }
+  });
 
   if (depth <= 0) return null;
 
   return (
-    <points geometry={geometry}>
-      <pointsMaterial color="#22c55e" size={0.012} sizeAttenuation />
-    </points>
+    <>
+      <points geometry={geometry}>
+        <pointsMaterial color="#22c55e" size={0.012} sizeAttenuation />
+      </points>
+      <mesh ref={headRef}>
+        <sphereGeometry args={[0.025, 12, 12]} />
+        <meshBasicMaterial color="#fde047" />
+      </mesh>
+    </>
   );
 }
 
@@ -344,7 +397,7 @@ export default function BarnsleyFern() {
   const transforms = useMemo(() => paramsToTransforms(params), [params]);
 
   return (
-    <ControlPanel maxDepth={5} defaultDepth={3} defaultInterval={500} enableWireframe={false}>
+    <ControlPanel maxDepth={6} defaultDepth={5} defaultInterval={500} enableWireframe={false}>
       {({ currentDepth }) => (
         <>
           <FernEditor params={params} onChange={setParams} />
