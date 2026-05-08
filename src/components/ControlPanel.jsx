@@ -14,7 +14,7 @@ export default function ControlPanel({
   maxDepth,
   defaultDepth = 6,
   defaultInterval = 450,
-  enableWireframe = true,
+  extraControls,
   children,
 }) {
 
@@ -80,7 +80,7 @@ export default function ControlPanel({
 
   const [targetDepth, setTargetDepth] = useState(defaultDepth);
   const [stepInterval, setStepInterval] = useState(defaultInterval);
-  const [wireframe, setWireframe] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
   const isMobile = useIsMobile();
   const s = isMobile ? mobile : desktop;
 
@@ -94,8 +94,6 @@ export default function ControlPanel({
     reset,
   } = useFractalAnimation(targetDepth, stepInterval);
 
-  const effectiveWireframe = enableWireframe ? wireframe : false;
-
   return (
     <>
       <div style={s.panel}>
@@ -106,95 +104,105 @@ export default function ControlPanel({
             ステップ {currentDepth} / {targetDepth}
             {isPlaying ? " ▶" : isFinished ? " ■" : " ⏸"}
           </span>
-        </div>
-
-        {/* パラメータ入力 */}
-        <div style={{ ...s.row, marginTop: isMobile ? 8 : 10 }}>
-          <span style={s.label}>目標深さ（depth）</span>
-          <input
-            type="number"
-            min={0}
-            max={maxDepth}
-            value={targetDepth}
-            onChange={(e) => setTargetDepth(Math.max(0, Math.min(maxDepth, Number(e.target.value))))}
-            style={s.input}
-            disabled={isPlaying}
-          />
-        </div>
-        <div style={{ ...s.row, marginBottom: isMobile ? 10 : 14 }}>
-          <span style={s.label}>ステップ間隔（ms）</span>
-          <input
-            type="number"
-            min={100}
-            max={5000}
-            step={50}
-            value={stepInterval}
-            onChange={(e) => setStepInterval(Math.max(100, Number(e.target.value)))}
-            style={s.input}
-            disabled={isPlaying}
-          />
-        </div>
-
-        {/* 操作ボタン */}
-        <div style={s.buttonRow}>
           <button
-            onClick={start}
-            disabled={isPlaying}
+            onClick={() => setIsMinimized((v) => !v)}
             style={{
-              ...s.button,
-              background: isPlaying ? color.cpInput : color.teal,
-              color: isPlaying ? color.cpTextin : color.cpTextin,
-              border: isPlaying ? `1px solid ${color.cpBorder}` : "none",
+              background: 'transparent',
+              border: `1px solid ${color.cpBorder}`,
+              borderRadius: shape.radiusSm,
+              color: color.cpText,
+              cursor: 'pointer',
+              fontSize: 11,
+              padding: '2px 7px',
+              lineHeight: 1,
             }}
           >
-            生成スタート
-          </button>
-          <button
-            onClick={isPlaying ? pause : resume}
-            disabled={isFinished && !isPlaying}
-            style={{
-              ...s.button,
-              background: isFinished && !isPlaying ? color.cpInput : color.cpResume,
-              color: isFinished && !isPlaying ? color.cpTextin : color.cpText,
-              border: isFinished && !isPlaying ? `1px solid ${color.cpBorder}` : "none",
-            }}
-          >
-            {isPlaying ? "一時停止" : "再開"}
-          </button>
-          <button
-            onClick={reset}
-            style={{
-              ...s.button,
-              background: "rgba(220, 60, 80, 0.85)",
-              color: color.cpTextin,
-              border: "none",
-            }}
-          >
-            リセット
+            {isMinimized ? '▲' : '▼'}
           </button>
         </div>
 
-        {/* オプション */}
-        {enableWireframe && (
-          <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", color: color.cpText, fontSize: s.label.fontSize }}>
-            <input
-              type="checkbox"
-              checked={wireframe}
-              onChange={(e) => setWireframe(e.target.checked)}
-            />
-            ワイヤーフレーム
-          </label>
+        {!isMinimized && (
+          <>
+            {/* パラメータ入力 */}
+            <div style={{ ...s.row, marginTop: isMobile ? 8 : 10 }}>
+              <span style={s.label}>目標深さ（depth）</span>
+              <input
+                type="number"
+                min={0}
+                max={maxDepth}
+                value={targetDepth}
+                onChange={(e) => setTargetDepth(Math.max(0, Math.min(maxDepth, Number(e.target.value))))}
+                style={s.input}
+                disabled={isPlaying}
+              />
+            </div>
+            <div style={{ ...s.row, marginBottom: isMobile ? 10 : 14 }}>
+              <span style={s.label}>ステップ間隔（ms）</span>
+              <input
+                type="number"
+                min={100}
+                max={5000}
+                step={50}
+                value={stepInterval}
+                onChange={(e) => setStepInterval(Math.max(100, Number(e.target.value)))}
+                style={s.input}
+                disabled={isPlaying}
+              />
+            </div>
+
+            {/* 操作ボタン */}
+            <div style={s.buttonRow}>
+              <button
+                onClick={start}
+                disabled={isPlaying}
+                style={{
+                  ...s.button,
+                  background: isPlaying ? color.cpInput : color.teal,
+                  color: isPlaying ? color.cpTextin : color.cpTextin,
+                  border: isPlaying ? `1px solid ${color.cpBorder}` : "none",
+                }}
+              >
+                生成スタート
+              </button>
+              <button
+                onClick={isPlaying ? pause : resume}
+                disabled={isFinished && !isPlaying}
+                style={{
+                  ...s.button,
+                  background: isFinished && !isPlaying ? color.cpInput : color.cpResume,
+                  color: isFinished && !isPlaying ? color.cpTextin : color.cpText,
+                  border: isFinished && !isPlaying ? `1px solid ${color.cpBorder}` : "none",
+                }}
+              >
+                {isPlaying ? "一時停止" : "再開"}
+              </button>
+              <button
+                onClick={reset}
+                style={{
+                  ...s.button,
+                  background: "rgba(220, 60, 80, 0.85)",
+                  color: color.cpTextin,
+                  border: "none",
+                }}
+              >
+                リセット
+              </button>
+            </div>
+
+            {/* 図形固有の追加UI（任意） */}
+            {extraControls}
+
+            <div style={{ marginTop: isMobile ? 8 : 10 }}>
+              <Link to="/models" style={s.link}>
+                図形選択に戻る
+              </Link>
+            </div>
+          </>
         )}
-
-        <div style={{ marginTop: isMobile ? 8 : 10 }}>
-          <Link to="/models" style={s.link}>
-            図形選択に戻る
-          </Link>
-        </div>
       </div>
 
       {/* render prop でMeshを描画 */}
-      {children({ currentDepth, wireframe: effectiveWireframe })}
+      {children({ currentDepth })}
     </>
   );
 }

@@ -54,7 +54,7 @@ const colorDark = {
   cpOverlay:     'rgba(0, 0, 0, 0.8)',
   cpText:        'rgba(217, 230, 240, 0.82)',
   cpTextin:      'rgb(255, 255, 255)',
-  cpBorder:      'rgba(0, 0, 0, 0.68)',
+  cpBorder:      'rgba(6, 108, 67, 0.24)',
   cpSubtle:      'rgba(228, 230, 251, 0.8)',
   cpResume:      '#fafa12d6',
   cpInbg:        'rgba(137, 146, 161, 0.84)',

@@ -1,7 +1,9 @@
+import { useState } from "react";
 import * as THREE from "three";
 import { useCreateGeometry } from "../../hooks/useCreateGeometry";
 import FractalScene from "../../components/FractalScene";
 import ControlPanel from "../../components/ControlPanel";
+import PanelCheckbox from "../../components/PanelCheckbox";
 import { getFractalCatalogByPath } from "../../models/fractalCatalog";
 
 /* =========================
@@ -124,9 +126,18 @@ function SierpinskiMesh({ depth, wireframe }) {
  */
 export default function SierpinskiPyramid() {
   const model=getFractalCatalogByPath('sierpinski')
+  const [wireframe, setWireframe] = useState(false);
+
   return (
-    <ControlPanel maxDepth={8} defaultDepth={6} defaultInterval={450}>
-      {({ currentDepth, wireframe }) => (
+    <ControlPanel
+      maxDepth={8}
+      defaultDepth={6}
+      defaultInterval={450}
+      extraControls={
+        <PanelCheckbox label="ワイヤーフレーム" checked={wireframe} onChange={setWireframe} />
+      }
+    >
+      {({ currentDepth }) => (
         <FractalScene  background={model.bgColor ?? '#292f38'}>
           <SierpinskiMesh depth={currentDepth} wireframe={wireframe} />
         </FractalScene>

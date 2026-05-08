@@ -22,7 +22,8 @@ src/
 ├── index.css
 ├── components/
 │   ├── FractalScene.jsx        # 共通3Dシーン（Canvas + ライティング + カメラ操作）
-│   └── ControlPanel.jsx        # 共通UIパネル（アニメーション制御 + ワイヤーフレーム）
+│   ├── ControlPanel.jsx        # 共通UIパネル（アニメーション制御 + 拡張スロット）
+│   └── PanelCheckbox.jsx       # ControlPanel に差し込むラベル付きチェックボックス
 ├── hooks/
 │   ├── useCreateGeometry.js    # ジオメトリ生成フック
 │   └── useFractalAnimation.js  # ステップアニメーション制御フック
@@ -36,6 +37,10 @@ src/
 │   │   └── KochCurve.jsx       # コッホ曲線
 │   ├── hilbert/
 │   │   └── HilbertCurve.jsx    # ヒルベルト曲線
+│   ├── barnsley/
+│   │   ├── BarnsleyFern.jsx    # バーンズリーのシダ（IFS / カオスゲーム）
+│   │   ├── barnsleyMath.js     # パラメータ・アフィン変換・点群生成
+│   │   └── FernEditor.jsx      # シダの形を調整するサイドパネル
 │   └── mandelbulb/
 │       ├── Mandelbulb.jsx      # マンデルバルブ（レイマーチング）
 │       └── mandelbulbShader.js # マンデルバルブ用シェーダー
@@ -101,7 +106,8 @@ function MyLine({ depth }) {
 | コンポーネント | 役割 |
 |---|---|
 | `FractalScene` | Canvas + ライティング + OrbitControls のラッパー。children に Mesh を渡す |
-| `ControlPanel` | UIパネル（パラメータ入力 + アニメーション制御 + ワイヤーフレーム）。render prop で currentDepth と wireframe を渡す |
+| `ControlPanel` | UIパネル（パラメータ入力 + アニメーション制御）。render prop で currentDepth を渡す。`extraControls` プロップで図形固有のUI（ワイヤーフレーム切り替え等）を差し込める |
+| `PanelCheckbox` | `extraControls` 用のラベル付きチェックボックス。フラクタル間でスタイルを揃えるためのヘルパー |
 
 ### 各フラクタルファイルの責務
 
@@ -128,8 +134,9 @@ function MyLine({ depth }) {
 | `/mandelbulb` | マンデルバルブ |
 | `/koch` | コッホ曲線 |
 | `/hilbert` | ヒルベルト曲線 |
+| `/barnsley` | バーンズリーのシダ |
 
-3D描画ページ（`/sierpinski`, `/menger`, `/mandelbulb`, `/koch`, `/hilbert`）は `React.lazy` + `Suspense` で遅延読み込みしている。
+3D描画ページ（`/sierpinski`, `/menger`, `/mandelbulb`, `/koch`, `/hilbert`, `/barnsley`）は `React.lazy` + `Suspense` で遅延読み込みしている。
 
 ### フラクタルレジストリ（`src/fractals/index.js`）
 

@@ -81,7 +81,7 @@ function KochLine({ depth }) {
 export default function KochCurve() {
   const model=getFractalCatalogByPath('koch')
   return (
-    <ControlPanel maxDepth={7} defaultDepth={5} defaultInterval={400} enableWireframe={false}>
+    <ControlPanel maxDepth={7} defaultDepth={5} defaultInterval={400}>
       {({ currentDepth }) => (
         <FractalScene background={model.bgColor ?? '#292f38'}>
           <KochLine depth={currentDepth} />

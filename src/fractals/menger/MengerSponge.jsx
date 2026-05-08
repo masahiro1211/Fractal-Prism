@@ -1,8 +1,10 @@
+import { useState } from "react";
 import * as THREE from "three";
 import { useCreateGeometry } from "../../hooks/useCreateGeometry";
 import FractalScene from "../../components/FractalScene";
 import ControlPanel from "../../components/ControlPanel";
 import { getFractalCatalogByPath } from "../../models/fractalCatalog";
+import PanelCheckbox from "../../components/PanelCheckbox";
 
 /* =========================
    メンガースポンジ生成ロジック
@@ -125,9 +127,18 @@ function MengerMesh({ depth, wireframe }) {
  */
 export default function MengerSponge() {
   const model=getFractalCatalogByPath('menger')
+  const [wireframe, setWireframe] = useState(false);
+
   return (
-    <ControlPanel maxDepth={4} defaultDepth={4} defaultInterval={600}>
-      {({ currentDepth, wireframe }) => (
+    <ControlPanel
+      maxDepth={4}
+      defaultDepth={4}
+      defaultInterval={600}
+      extraControls={
+        <PanelCheckbox label="ワイヤーフレーム" checked={wireframe} onChange={setWireframe} />
+      }
+    >
+      {({ currentDepth }) => (
         <FractalScene background={model.bgColor ?? '#292f38'}>
           <MengerMesh depth={currentDepth} wireframe={wireframe} />
         </FractalScene>
