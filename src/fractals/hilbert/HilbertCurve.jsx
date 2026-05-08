@@ -97,7 +97,7 @@ function HilbertLine({ depth }) {
  */
 export default function HilbertCurve() {
   return (
-    <ControlPanel maxDepth={6} defaultDepth={4} defaultInterval={600} enableWireframe={false}>
+    <ControlPanel maxDepth={6} defaultDepth={4} defaultInterval={600}>
       {({ currentDepth }) => (
         <FractalScene>
           <HilbertLine depth={currentDepth} />

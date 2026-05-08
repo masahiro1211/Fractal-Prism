@@ -1,7 +1,9 @@
+import { useState } from "react";
 import * as THREE from "three";
 import { useCreateGeometry } from "../../hooks/useCreateGeometry";
 import FractalScene from "../../components/FractalScene";
 import ControlPanel from "../../components/ControlPanel";
+import PanelCheckbox from "../../components/PanelCheckbox";
 
 /* =========================
    シェルピンスキー生成ロジック
@@ -122,9 +124,18 @@ function SierpinskiMesh({ depth, wireframe }) {
  * シェルピンスキー四面体の完全なシーン。
  */
 export default function SierpinskiPyramid() {
+  const [wireframe, setWireframe] = useState(false);
+
   return (
-    <ControlPanel maxDepth={8} defaultDepth={6} defaultInterval={450}>
-      {({ currentDepth, wireframe }) => (
+    <ControlPanel
+      maxDepth={8}
+      defaultDepth={6}
+      defaultInterval={450}
+      extraControls={
+        <PanelCheckbox label="ワイヤーフレーム" checked={wireframe} onChange={setWireframe} />
+      }
+    >
+      {({ currentDepth }) => (
         <FractalScene>
           <SierpinskiMesh depth={currentDepth} wireframe={wireframe} />
         </FractalScene>

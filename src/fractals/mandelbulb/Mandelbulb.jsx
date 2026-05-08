@@ -150,7 +150,6 @@ export default function Mandelbulb() {
       maxDepth={24}
       defaultDepth={14}
       defaultInterval={250}
-      enableWireframe={false}
     >
       {({ currentDepth }) => (
         <>
