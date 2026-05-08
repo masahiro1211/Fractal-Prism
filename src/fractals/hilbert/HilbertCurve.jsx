@@ -1,7 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Line } from "@react-three/drei";
-import * as THREE from "three";
 import FractalScene from "../../components/FractalScene";
 import ControlPanel from "../../components/ControlPanel";
 import PanelCheckbox from "../../components/PanelCheckbox";
@@ -97,28 +96,16 @@ function HilbertLine({ depth }) {
 
 /**
  * 3次元ヒルベルト曲線の追跡描画モード。
- * 1フレームごとに setDrawRange で表示頂点数を増やし、曲線が空間を
- * 埋めていく様子をアニメーションで見せる。最新の頂点位置にはヘッド
- * マーカー(黄色の球)を置く。
+ * drei の Line（内部は Line2 / LineSegmentsGeometry）を ref 経由で取り、
+ * 毎フレーム instanceCount を増やすことで太線のまま順次描画する演出を行う。
+ * 最新の頂点位置にはヘッドマーカー(黄色の球)を置く。
  *
- * GL の line は仕様上 1px 固定なので静的モードのような太線にはできない。
- *
- * @param {{ depth: number }} props
+ * @param {{ depth: number, stepInterval: number }} props
  */
 function HilbertLineTracking({ depth, stepInterval }) {
   const points = useMemo(() => generatePoints(depth), [depth]);
 
-  // [x,y,z] タプル配列を Float32Array に詰め直す
-  const positions = useMemo(() => {
-    const arr = new Float32Array(points.length * 3);
-    for (let i = 0; i < points.length; i++) {
-      arr[i * 3] = points[i][0];
-      arr[i * 3 + 1] = points[i][1];
-      arr[i * 3 + 2] = points[i][2];
-    }
-    return arr;
-  }, [points]);
-
+  const lineRef = useRef(null);
   const visibleCountRef = useRef(0);
   const headRef = useRef(null);
 
@@ -127,42 +114,38 @@ function HilbertLineTracking({ depth, stepInterval }) {
     if (depth <= 0) visibleCountRef.current = 0;
   }, [depth]);
 
-  const geometry = useMemo(() => {
-    const geom = new THREE.BufferGeometry();
-    geom.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-    return geom;
-  }, [positions]);
-
-  // 新しい geometry の drawRange を、前の表示頂点数に揃えてから描画させる
+  // points が変わった直後（geometry 再構築後）に、前の表示セグメント数へ揃える
   useLayoutEffect(() => {
-    const totalPoints = positions.length / 3;
-    if (visibleCountRef.current > totalPoints) {
-      visibleCountRef.current = totalPoints;
+    const totalSegments = Math.max(0, points.length - 1);
+    if (visibleCountRef.current > totalSegments) {
+      visibleCountRef.current = totalSegments;
     }
-    geometry.setDrawRange(0, visibleCountRef.current);
-  }, [geometry, positions]);
+    if (lineRef.current?.geometry) {
+      lineRef.current.geometry.instanceCount = visibleCountRef.current;
+    }
+  }, [points]);
 
   useFrame(() => {
-    const totalPoints = positions.length / 3;
-    if (visibleCountRef.current < totalPoints) {
+    const totalSegments = Math.max(0, points.length - 1);
+    if (visibleCountRef.current < totalSegments) {
       // 自動ステップ送り（stepInterval ms）の 80% 以内に描き終わるよう step を決める。
       // 60fps 想定で frames = stepInterval * 0.8 / (1000/60)
       const targetFrames = Math.max(1, (stepInterval * 0.8) / (1000 / 60));
-      const step = Math.max(2, Math.ceil(totalPoints / targetFrames));
-      visibleCountRef.current = Math.min(totalPoints, visibleCountRef.current + step);
-      geometry.setDrawRange(0, visibleCountRef.current);
+      const step = Math.max(2, Math.ceil(totalSegments / targetFrames));
+      visibleCountRef.current = Math.min(totalSegments, visibleCountRef.current + step);
+    }
+    if (lineRef.current?.geometry) {
+      lineRef.current.geometry.instanceCount = visibleCountRef.current;
     }
     if (headRef.current && visibleCountRef.current > 0) {
-      const i = (visibleCountRef.current - 1) * 3;
-      headRef.current.position.set(positions[i], positions[i + 1], positions[i + 2]);
+      const p = points[visibleCountRef.current];
+      headRef.current.position.set(p[0], p[1], p[2]);
     }
   });
 
   return (
     <>
-      <line geometry={geometry}>
-        <lineBasicMaterial color="#a78bfa" />
-      </line>
+      <Line ref={lineRef} points={points} color="#a78bfa" lineWidth={2} />
       <mesh ref={headRef}>
         <sphereGeometry args={[0.025, 12, 12]} />
         <meshBasicMaterial color="#fde047" />
