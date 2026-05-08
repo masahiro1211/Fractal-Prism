@@ -1,20 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useFractalAnimation } from "../hooks/useFractalAnimation";
+import { useIsMobile } from "../hooks/useIsMobile";
 import { color, shape, pageStyles } from "../styles/pageStyles";
-
-function useIsMobile(breakpoint = 600) {
-  const [isMobile, setIsMobile] = useState(
-    () => window.innerWidth < breakpoint
-  );
-  useEffect(() => {
-    const mq = window.matchMedia(`(max-width: ${breakpoint - 1}px)`);
-    const update = (e) => setIsMobile(e.matches);
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, [breakpoint]);
-  return isMobile;
-}
 
 /* =========================
    スタイル定義
@@ -78,20 +66,22 @@ const mobile = {
 
 /**
  * フラクタル生成の共通コントロールパネル。
- * ステップアニメーション制御、パラメータ入力、ワイヤーフレーム切り替えを提供する。
+ * ステップアニメーション制御とパラメータ入力を提供する。
  *
- * @param {{ maxDepth: number, defaultDepth: number, defaultInterval: number, enableWireframe: boolean, children: (state: { currentDepth: number, wireframe: boolean }) => React.ReactNode }} props
+ * `extraControls` を渡すと操作ボタンの直下にフラクタル固有のUIを差し込める。
+ * ラベル付きチェックボックスは `<PanelCheckbox>` を使うとスタイルが揃う。
+ *
+ * @param {{ maxDepth: number, defaultDepth: number, defaultInterval: number, extraControls?: React.ReactNode, children: (state: { currentDepth: number }) => React.ReactNode }} props
  */
 export default function ControlPanel({
   maxDepth,
   defaultDepth = 6,
   defaultInterval = 450,
-  enableWireframe = true,
+  extraControls,
   children,
 }) {
   const [targetDepth, setTargetDepth] = useState(defaultDepth);
   const [stepInterval, setStepInterval] = useState(defaultInterval);
-  const [wireframe, setWireframe] = useState(false);
   const isMobile = useIsMobile();
   const s = isMobile ? mobile : desktop;
 
@@ -104,8 +94,6 @@ export default function ControlPanel({
     resume,
     reset,
   } = useFractalAnimation(targetDepth, stepInterval);
-
-  const effectiveWireframe = enableWireframe ? wireframe : false;
 
   return (
     <>
@@ -185,17 +173,8 @@ export default function ControlPanel({
           </button>
         </div>
 
-        {/* オプション */}
-        {enableWireframe && (
-          <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", color: color.textSecondary, fontSize: s.label.fontSize }}>
-            <input
-              type="checkbox"
-              checked={wireframe}
-              onChange={(e) => setWireframe(e.target.checked)}
-            />
-            ワイヤーフレーム
-          </label>
-        )}
+        {/* 図形固有の追加UI（任意） */}
+        {extraControls}
 
         <div style={{ marginTop: isMobile ? 8 : 10 }}>
           <Link to="/models" style={s.link}>
@@ -205,7 +184,7 @@ export default function ControlPanel({
       </div>
 
       {/* render prop でMeshを描画 */}
-      {children({ currentDepth, wireframe: effectiveWireframe })}
+      {children({ currentDepth, stepInterval })}
     </>
   );
 }

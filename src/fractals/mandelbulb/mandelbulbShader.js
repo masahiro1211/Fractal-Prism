@@ -1,36 +1,24 @@
+// Three.js のビルトイン uniform `cameraPosition`、`modelMatrix`、`viewMatrix`、
+// `projectionMatrix` は ShaderMaterial が自動で注入する。
+
 export const vertexShader = /* glsl */ `
-varying vec2 vUv;
+varying vec3 vWorldPos;
 void main() {
-  vUv = uv;
-  gl_Position = vec4(position.xy, 0.0, 1.0);
+  vec4 worldPos = modelMatrix * vec4(position, 1.0);
+  vWorldPos = worldPos.xyz;
+  gl_Position = projectionMatrix * viewMatrix * worldPos;
 }
 `;
 
 export const fragmentShader = /* glsl */ `
 precision highp float;
 
-varying vec2 vUv;
-
-uniform vec2 uResolution;
-
-uniform vec2 uRot;
-uniform vec2 uPan;
-uniform float uGrow;
-uniform float uZoom;
+varying vec3 vWorldPos;
 
 uniform float uPower;
 uniform float uBailout;
 uniform float uMaxIterF;
-
-mat3 rotY(float a) {
-  float c = cos(a), s = sin(a);
-  return mat3(c, 0.0, s, 0.0, 1.0, 0.0, -s, 0.0, c);
-}
-
-mat3 rotX(float a) {
-  float c = cos(a), s = sin(a);
-  return mat3(1.0, 0.0, 0.0, 0.0, c, -s, 0.0, s, c);
-}
+uniform float uShadow;
 
 float mandelbulbDE(vec3 p, int maxIter, float power, float bailout) {
   vec3 z = p;
@@ -84,7 +72,7 @@ bool raymarch(
   out float travel
 ) {
   float t = 0.0;
-  float tMax = 30.0;
+  float tMax = 50.0;
   float eps = 1e-3;
 
   for (int step = 0; step < 160; step++) {
@@ -103,7 +91,16 @@ bool raymarch(
   return false;
 }
 
-vec3 shade(vec3 p, vec3 n, vec3 ro, float travel) {
+// 影 OFF: 単色 (#cbd5e1) ベースに ambient + diffuse の最小限の陰影。
+vec3 shadeFlat(vec3 n) {
+  vec3 baseColor = vec3(0.796, 0.835, 0.882);
+  vec3 lightDir = normalize(vec3(1.0, 1.0, 1.0));
+  float diff = clamp(dot(n, lightDir), 0.0, 1.0);
+  return baseColor * (0.6 + 0.5 * diff);
+}
+
+// 影 ON: 法線ベースの多色 + diffuse + specular + 距離フォグ。
+vec3 shadeLit(vec3 p, vec3 n, vec3 ro, float travel) {
   vec3 lightDir = normalize(vec3(0.6, 0.8, 0.2));
   float diff = clamp(dot(n, lightDir), 0.0, 1.0);
 
@@ -115,26 +112,15 @@ vec3 shade(vec3 p, vec3 n, vec3 ro, float travel) {
 
   vec3 base = 0.45 + 0.55 * n;
   vec3 col = base * (0.18 + 1.1 * diff) + 0.6 * spec;
-  col = mix(col, vec3(0.02, 0.03, 0.05), fog);
-  return col;
+  return mix(col, vec3(0.02, 0.03, 0.05), fog);
 }
 
 void main() {
-  vec2 frag = vUv * uResolution;
-  vec2 p = (frag - 0.5 * uResolution) / uResolution.y - uPan;
+  // カメラ位置から、いまレンダしている囲みスフィア表面に向かう方向がそのまま視線。
+  vec3 ro = cameraPosition;
+  vec3 rd = normalize(vWorldPos - cameraPosition);
 
-  float dist = 4.0 / uZoom;
-  vec3 ro = vec3(0.0, 0.0, dist);
-  vec3 rd = normalize(vec3(p, -1.5));
-
-  float ay = uRot.x;
-  float ax = uRot.y;
-  mat3 R = rotY(ay) * rotX(ax);
-
-  ro = R * ro;
-  rd = R * rd;
-
-  int maxIter = int(mix(2.0, uMaxIterF, clamp(uGrow, 0.0, 1.0)));
+  int maxIter = int(uMaxIterF);
 
   vec3 hitPos;
   float travel;
@@ -142,7 +128,9 @@ void main() {
 
   if (raymarch(ro, rd, maxIter, uPower, uBailout, hitPos, travel)) {
     vec3 n = estimateNormal(hitPos, maxIter, uPower, uBailout);
-    col = shade(hitPos, n, ro, travel);
+    col = uShadow > 0.5
+      ? shadeLit(hitPos, n, ro, travel)
+      : shadeFlat(n);
   } else {
     float v = 0.6 + 0.4 * smoothstep(-0.2, 0.8, rd.y);
     col = vec3(0.03, 0.04, 0.06) * v;
