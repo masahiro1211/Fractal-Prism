@@ -15,10 +15,10 @@ precision highp float;
 
 varying vec3 vWorldPos;
 
-uniform float uGrow;
 uniform float uPower;
 uniform float uBailout;
 uniform float uMaxIterF;
+uniform float uShadow;
 
 float mandelbulbDE(vec3 p, int maxIter, float power, float bailout) {
   vec3 z = p;
@@ -91,7 +91,16 @@ bool raymarch(
   return false;
 }
 
-vec3 shade(vec3 p, vec3 n, vec3 ro, float travel) {
+// 影 OFF: 単色 (#cbd5e1) ベースに ambient + diffuse の最小限の陰影。
+vec3 shadeFlat(vec3 n) {
+  vec3 baseColor = vec3(0.796, 0.835, 0.882);
+  vec3 lightDir = normalize(vec3(1.0, 1.0, 1.0));
+  float diff = clamp(dot(n, lightDir), 0.0, 1.0);
+  return baseColor * (0.6 + 0.5 * diff);
+}
+
+// 影 ON: 法線ベースの多色 + diffuse + specular + 距離フォグ。
+vec3 shadeLit(vec3 p, vec3 n, vec3 ro, float travel) {
   vec3 lightDir = normalize(vec3(0.6, 0.8, 0.2));
   float diff = clamp(dot(n, lightDir), 0.0, 1.0);
 
@@ -103,8 +112,7 @@ vec3 shade(vec3 p, vec3 n, vec3 ro, float travel) {
 
   vec3 base = 0.45 + 0.55 * n;
   vec3 col = base * (0.18 + 1.1 * diff) + 0.6 * spec;
-  col = mix(col, vec3(0.02, 0.03, 0.05), fog);
-  return col;
+  return mix(col, vec3(0.02, 0.03, 0.05), fog);
 }
 
 void main() {
@@ -112,7 +120,7 @@ void main() {
   vec3 ro = cameraPosition;
   vec3 rd = normalize(vWorldPos - cameraPosition);
 
-  int maxIter = int(mix(2.0, uMaxIterF, clamp(uGrow, 0.0, 1.0)));
+  int maxIter = int(uMaxIterF);
 
   vec3 hitPos;
   float travel;
@@ -120,7 +128,9 @@ void main() {
 
   if (raymarch(ro, rd, maxIter, uPower, uBailout, hitPos, travel)) {
     vec3 n = estimateNormal(hitPos, maxIter, uPower, uBailout);
-    col = shade(hitPos, n, ro, travel);
+    col = uShadow > 0.5
+      ? shadeLit(hitPos, n, ro, travel)
+      : shadeFlat(n);
   } else {
     float v = 0.6 + 0.4 * smoothstep(-0.2, 0.8, rd.y);
     col = vec3(0.03, 0.04, 0.06) * v;
