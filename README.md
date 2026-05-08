@@ -36,6 +36,8 @@ src/
 │   │   └── KochCurve.jsx       # コッホ曲線
 │   ├── hilbert/
 │   │   └── HilbertCurve.jsx    # ヒルベルト曲線
+│   ├── barnsley/
+│   │   └── BarnsleyFern.jsx    # バーンズリーのシダ（IFS）
 │   └── mandelbulb/
 │       ├── Mandelbulb.jsx      # マンデルバルブ（レイマーチング）
 │       └── mandelbulbShader.js # マンデルバルブ用シェーダー
@@ -128,8 +130,9 @@ function MyLine({ depth }) {
 | `/mandelbulb` | マンデルバルブ |
 | `/koch` | コッホ曲線 |
 | `/hilbert` | ヒルベルト曲線 |
+| `/barnsley` | バーンズリーのシダ |
 
-3D描画ページ（`/sierpinski`, `/menger`, `/mandelbulb`, `/koch`, `/hilbert`）は `React.lazy` + `Suspense` で遅延読み込みしている。
+3D描画ページ（`/sierpinski`, `/menger`, `/mandelbulb`, `/koch`, `/hilbert`, `/barnsley`）は `React.lazy` + `Suspense` で遅延読み込みしている。
 
 ### フラクタルレジストリ（`src/fractals/index.js`）
 
