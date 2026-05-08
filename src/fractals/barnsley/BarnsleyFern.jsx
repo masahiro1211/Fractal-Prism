@@ -156,12 +156,14 @@ function generatePositions(depth, transforms) {
  * バーンズリーのシダの点群コンポーネント。
  * depth が 0 の場合は描画をスキップする。
  *
- * 1フレームごとに setDrawRange で表示点数を増やし、カオスゲームの軌跡が
- * 順に描画されていく演出を行う。最新の点位置にはヘッドマーカーを置く。
+ * tracking=true: 1フレームごとに setDrawRange で表示点数を増やし、
+ *                 カオスゲームの軌跡が順に描画されていく演出を行う。
+ *                 最新の点位置にはヘッドマーカー(黄色の球)を置く。
+ * tracking=false: depth に対応する全点を即座に表示する（演出なし）。
  *
- * @param {{ depth: number, transforms: object[] }} props
+ * @param {{ depth: number, transforms: object[], tracking: boolean }} props
  */
-function BarnsleyFernPoints({ depth, transforms }) {
+function BarnsleyFernPoints({ depth, transforms, tracking }) {
   const positions = useMemo(
     () => generatePositions(Math.max(depth, 1), transforms),
     [depth, transforms]
@@ -187,18 +189,22 @@ function BarnsleyFernPoints({ depth, transforms }) {
     return geom;
   }, [positions]);
 
-  // 新しい geometry の drawRange を、前の表示点数に揃えてから描画させる
-  // （depth が増えたときにフラッシュせず、前回の続きから伸びていくようにするため）
+  // 新しい geometry の drawRange を、前の表示点数に揃えてから描画させる。
+  // tracking=false のときは常に全点を表示状態にする。
   useLayoutEffect(() => {
     const totalPoints = positions.length / 3;
-    if (visibleCountRef.current > totalPoints) {
+    if (!tracking) {
+      visibleCountRef.current = totalPoints;
+    } else if (visibleCountRef.current > totalPoints) {
       visibleCountRef.current = totalPoints;
     }
     geometry.setDrawRange(0, visibleCountRef.current);
-  }, [geometry, positions]);
+  }, [geometry, positions, tracking]);
 
   // 毎フレーム: 表示点数を進めてヘッドマーカーを最新位置に移動する
   useFrame(() => {
+    if (!tracking) return;
+
     const totalPoints = positions.length / 3;
     if (visibleCountRef.current < totalPoints) {
       // 小さい depth では1フレーム数点ずつ、大きい depth では多めに進める
@@ -219,10 +225,12 @@ function BarnsleyFernPoints({ depth, transforms }) {
       <points geometry={geometry}>
         <pointsMaterial color="#22c55e" size={0.012} sizeAttenuation />
       </points>
-      <mesh ref={headRef}>
-        <sphereGeometry args={[0.025, 12, 12]} />
-        <meshBasicMaterial color="#fde047" />
-      </mesh>
+      {tracking && (
+        <mesh ref={headRef}>
+          <sphereGeometry args={[0.025, 12, 12]} />
+          <meshBasicMaterial color="#fde047" />
+        </mesh>
+      )}
     </>
   );
 }
@@ -394,15 +402,43 @@ function FernEditor({ params, onChange }) {
  */
 export default function BarnsleyFern() {
   const [params, setParams] = useState(DEFAULT_PARAMS);
+  const [tracking, setTracking] = useState(true);
   const transforms = useMemo(() => paramsToTransforms(params), [params]);
+  const isMobile = useIsMobile();
+
+  const trackingToggle = (
+    <label
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        cursor: "pointer",
+        color: color.textSecondary,
+        fontSize: isMobile ? 11 : 12,
+      }}
+    >
+      <input
+        type="checkbox"
+        checked={tracking}
+        onChange={(e) => setTracking(e.target.checked)}
+      />
+      追跡モード
+    </label>
+  );
 
   return (
-    <ControlPanel maxDepth={6} defaultDepth={5} defaultInterval={500} enableWireframe={false}>
+    <ControlPanel
+      maxDepth={6}
+      defaultDepth={5}
+      defaultInterval={500}
+      enableWireframe={false}
+      extraControls={trackingToggle}
+    >
       {({ currentDepth }) => (
         <>
           <FernEditor params={params} onChange={setParams} />
           <FractalScene>
-            <BarnsleyFernPoints depth={currentDepth} transforms={transforms} />
+            <BarnsleyFernPoints depth={currentDepth} transforms={transforms} tracking={tracking} />
           </FractalScene>
         </>
       )}

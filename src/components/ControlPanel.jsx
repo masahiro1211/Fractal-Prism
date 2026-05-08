@@ -68,13 +68,17 @@ const mobile = {
  * フラクタル生成の共通コントロールパネル。
  * ステップアニメーション制御、パラメータ入力、ワイヤーフレーム切り替えを提供する。
  *
- * @param {{ maxDepth: number, defaultDepth: number, defaultInterval: number, enableWireframe: boolean, children: (state: { currentDepth: number, wireframe: boolean }) => React.ReactNode }} props
+ * `extraControls` を渡すとワイヤーフレーム切り替えの直下にフラクタル固有のUIを差し込める。
+ * 配置位置を揃えるため、ラベルのスタイルは isMobile ? mobile.label : desktop.label に合わせるとよい。
+ *
+ * @param {{ maxDepth: number, defaultDepth: number, defaultInterval: number, enableWireframe: boolean, extraControls?: React.ReactNode, children: (state: { currentDepth: number, wireframe: boolean }) => React.ReactNode }} props
  */
 export default function ControlPanel({
   maxDepth,
   defaultDepth = 6,
   defaultInterval = 450,
   enableWireframe = true,
+  extraControls,
   children,
 }) {
   const [targetDepth, setTargetDepth] = useState(defaultDepth);
@@ -183,6 +187,13 @@ export default function ControlPanel({
             />
             ワイヤーフレーム
           </label>
+        )}
+
+        {/* 図形固有の追加UI（任意） */}
+        {extraControls && (
+          <div style={{ marginTop: enableWireframe ? 6 : 0 }}>
+            {extraControls}
+          </div>
         )}
 
         <div style={{ marginTop: isMobile ? 8 : 10 }}>
