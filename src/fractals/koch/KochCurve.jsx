@@ -79,7 +79,7 @@ function KochLine({ depth }) {
  */
 export default function KochCurve() {
   return (
-    <ControlPanel maxDepth={7} defaultDepth={5} defaultInterval={400} enableWireframe={false}>
+    <ControlPanel maxDepth={7} defaultDepth={5} defaultInterval={400}>
       {({ currentDepth }) => (
         <FractalScene>
           <KochLine depth={currentDepth} />
