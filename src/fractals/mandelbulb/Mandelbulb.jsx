@@ -1,6 +1,6 @@
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
-import { useMemo, useRef, useEffect, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import ControlPanel from "../../components/ControlPanel";
 import PanelCheckbox from "../../components/PanelCheckbox";
@@ -45,13 +45,12 @@ const mobilePanel = {
  */
 function MandelbulbBackground({ power, bailout, maxIterCap, shadow }) {
   const matRef = useRef(null);
-  const elapsedRef = useRef(0);
-  const growStartRef = useRef(0);
-  const { gl } = useThree();
+  // ControlPanel から渡る maxIterCap は整数で 250ms ごとに飛ぶので、
+  // 描画用の uMaxIterF は毎フレーム少しずつ追従させて視覚的な階段を消す。
+  const displayedIterRef = useRef(2);
 
   const uniforms = useMemo(
     () => ({
-      uGrow: { value: 0 },
       uPower: { value: 8.0 },
       uBailout: { value: 4.0 },
       uMaxIterF: { value: 2.0 },
@@ -60,70 +59,17 @@ function MandelbulbBackground({ power, bailout, maxIterCap, shadow }) {
     []
   );
 
-  useFrame(({ clock }) => {
+  useFrame(() => {
     const material = matRef.current;
     if (!material) return;
 
-    const t = clock.getElapsedTime();
-    elapsedRef.current = t;
+    displayedIterRef.current = THREE.MathUtils.lerp(displayedIterRef.current, maxIterCap, 0.08);
 
     material.uniforms.uPower.value = power;
     material.uniforms.uBailout.value = bailout;
-    material.uniforms.uMaxIterF.value = maxIterCap;
+    material.uniforms.uMaxIterF.value = displayedIterRef.current;
     material.uniforms.uShadow.value = shadow ? 1.0 : 0.0;
-
-    const grow = THREE.MathUtils.clamp((t - growStartRef.current) / 2.5, 0, 1);
-    material.uniforms.uGrow.value = grow;
   });
-
-  // タップ/クリックで成長アニメをリセット。
-  // ブラウザの click イベントは OrbitControls のドラッグ終端でも発火することが
-  // あるので使わず、pointerdown→pointerup の移動量が閾値以下のときだけ
-  // タップと判定する。
-  useEffect(() => {
-    const el = gl.domElement;
-    const threshold = 6;
-    let hasDown = false;
-    let moved = false;
-    let downX = 0;
-    let downY = 0;
-
-    const onDown = (e) => {
-      if (!e.isPrimary) return;
-      hasDown = true;
-      moved = false;
-      downX = e.clientX;
-      downY = e.clientY;
-    };
-
-    const onMove = (e) => {
-      if (!hasDown) return;
-      const dx = e.clientX - downX;
-      const dy = e.clientY - downY;
-      if (dx * dx + dy * dy > threshold * threshold) {
-        moved = true;
-      }
-    };
-
-    const onUp = (e) => {
-      if (!hasDown || !e.isPrimary) return;
-      hasDown = false;
-      if (!moved) {
-        growStartRef.current = elapsedRef.current;
-      }
-    };
-
-    el.addEventListener("pointerdown", onDown);
-    el.addEventListener("pointermove", onMove);
-    el.addEventListener("pointerup", onUp);
-    el.addEventListener("pointercancel", onUp);
-    return () => {
-      el.removeEventListener("pointerdown", onDown);
-      el.removeEventListener("pointermove", onMove);
-      el.removeEventListener("pointerup", onUp);
-      el.removeEventListener("pointercancel", onUp);
-    };
-  }, [gl]);
 
   return (
     <mesh>
@@ -191,8 +137,8 @@ export default function Mandelbulb() {
 
             <div style={s.hint}>
               {isMobile
-                ? "1本指: 回転 / 2本指: ピンチで拡大・ドラッグで移動 / タップ: 成長リセット"
-                : "左ドラッグ: 回転 / 右ドラッグ: 平行移動 / ホイール: ズーム / クリック: 成長リセット"}
+                ? "1本指: 回転 / 2本指: ピンチで拡大・ドラッグで移動"
+                : "左ドラッグ: 回転 / 右ドラッグ: 平行移動 / ホイール: ズーム"}
             </div>
           </div>
 

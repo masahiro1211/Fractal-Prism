@@ -15,7 +15,6 @@ precision highp float;
 
 varying vec3 vWorldPos;
 
-uniform float uGrow;
 uniform float uPower;
 uniform float uBailout;
 uniform float uMaxIterF;
@@ -121,7 +120,7 @@ void main() {
   vec3 ro = cameraPosition;
   vec3 rd = normalize(vWorldPos - cameraPosition);
 
-  int maxIter = int(mix(2.0, uMaxIterF, clamp(uGrow, 0.0, 1.0)));
+  int maxIter = int(uMaxIterF);
 
   vec3 hitPos;
   float travel;
