@@ -10,20 +10,72 @@ import { color, shape } from "../../styles/pageStyles";
    ========================= */
 
 /**
- * バーンズリーのシダを構成する4つのアフィン変換と各々の選択確率の標準値。
- * x' = a*x + b*y + e,  y' = c*x + d*y + f
+ * 意味付けされたメタパラメータの標準値（標準のシダ）。
  *
- * - f1 (1%):  茎
- * - f2 (85%): 連続して伸びていく小葉
- * - f3 (7%):  左側の大きな小葉
- * - f4 (7%):  右側の大きな小葉
+ * - leafTiltDeg     : 連続小葉(f2)の回転角度。0で真っ直ぐ伸び、正で右、負で左に傾く。
+ * - leafScale       : 連続小葉(f2)のスケール。1に近いほど葉が長く伸びる。
+ * - leftLeafletSize : 左側の大きな小葉(f3)のサイズ倍率（標準値=1.0）。
+ * - rightLeafletSize: 右側の大きな小葉(f4)のサイズ倍率（標準値=1.0）。
+ * - stemHeight      : 連続小葉(f2)の上方向への移動量。葉全体の縦の長さ。
+ * - leafletRatio    : 大きな小葉が出現する割合（f3+f4の合計確率）。
  */
-const DEFAULT_TRANSFORMS = [
-  { label: "f1 (茎)",       p: 0.01, a:  0.00, b:  0.00, c:  0.00, d: 0.16, e: 0, f: 0.00 },
-  { label: "f2 (連続小葉)", p: 0.85, a:  0.85, b:  0.04, c: -0.04, d: 0.85, e: 0, f: 1.60 },
-  { label: "f3 (左大葉)",   p: 0.07, a:  0.20, b: -0.26, c:  0.23, d: 0.22, e: 0, f: 1.60 },
-  { label: "f4 (右大葉)",   p: 0.07, a: -0.15, b:  0.28, c:  0.26, d: 0.24, e: 0, f: 0.44 },
-];
+const DEFAULT_PARAMS = {
+  leafTiltDeg: 2.7,
+  leafScale: 0.85,
+  leftLeafletSize: 1.0,
+  rightLeafletSize: 1.0,
+  stemHeight: 1.6,
+  leafletRatio: 0.14,
+};
+
+/**
+ * 名前付きプリセット。スライダー値もこの値にスナップする。
+ */
+const PRESETS = {
+  standard: { label: "標準",       params: { ...DEFAULT_PARAMS } },
+  tilted:   { label: "ねじれ",     params: { ...DEFAULT_PARAMS, leafTiltDeg: 8.0 } },
+  wide:     { label: "大葉",       params: { ...DEFAULT_PARAMS, leftLeafletSize: 1.4, rightLeafletSize: 1.4 } },
+  slim:     { label: "細身",       params: { ...DEFAULT_PARAMS, leftLeafletSize: 0.5, rightLeafletSize: 0.5 } },
+  upright:  { label: "細長",       params: { ...DEFAULT_PARAMS, leafScale: 0.92, stemHeight: 2.0 } },
+};
+
+/**
+ * 意味付けされたメタパラメータを4つのアフィン変換に展開する。
+ *
+ * - f1 (茎)        : 標準値固定。確率は 0.01。
+ * - f2 (連続小葉)   : leafScale + leafTilt + stemHeight から構築。
+ * - f3 (左大葉)    : 標準f3を leftLeafletSize で線形変倍。
+ * - f4 (右大葉)    : 標準f4を rightLeafletSize で線形変倍。
+ *
+ * @param {typeof DEFAULT_PARAMS} params
+ * @returns {{p:number,a:number,b:number,c:number,d:number,e:number,f:number}[]}
+ */
+function paramsToTransforms(params) {
+  const theta = (params.leafTiltDeg * Math.PI) / 180;
+  const s = params.leafScale;
+  const cos = Math.cos(theta);
+  const sin = Math.sin(theta);
+
+  // 大きな小葉の確率配分。leafletRatio を f3, f4 で半分ずつにする。
+  const halfLeafletP = params.leafletRatio / 2;
+  const stemP = 0.01;
+  const continuousP = Math.max(0, 1 - stemP - params.leafletRatio);
+
+  // 標準のf3, f4のままサイズ倍率を掛ける（回転と平行移動も含めて単純線形）
+  const lk = params.leftLeafletSize;
+  const rk = params.rightLeafletSize;
+
+  return [
+    // f1: 茎（標準値固定）
+    { p: stemP,        a:  0.00,         b:  0.00,         c:  0.00,         d:  0.16,         e: 0, f: 0.00 },
+    // f2: 連続小葉 = scale * rotation + 上方向への平行移動
+    { p: continuousP,  a:  s * cos,      b: -s * sin,      c:  s * sin,      d:  s * cos,      e: 0, f: params.stemHeight },
+    // f3: 左大葉（標準値 × サイズ倍率）
+    { p: halfLeafletP, a:  0.20 * lk,    b: -0.26 * lk,    c:  0.23 * lk,    d:  0.22 * lk,    e: 0, f: 1.60 * lk },
+    // f4: 右大葉（標準値 × サイズ倍率）
+    { p: halfLeafletP, a: -0.15 * rk,    b:  0.28 * rk,    c:  0.26 * rk,    d:  0.24 * rk,    e: 0, f: 0.44 * rk },
+  ];
+}
 
 // 標準の Barnsley fern は x ≈ [-2.2, 2.7], y ≈ [0, 10] に分布する。
 // シーンの [-1, 1] 程度に収まるよう中央寄せ＋スケーリングする係数。
@@ -33,10 +85,9 @@ const Y_OFFSET = -0.9;
 /**
  * カオスゲームによりバーンズリーのシダの点群を生成する。
  * 反復回数は depth から指数的に決まる（100 × 4^depth 点）。
- * 確率の合計が1でない場合は内部で正規化する。
  *
  * @param {number} depth - フラクタルの深さ（反復回数の指数）
- * @param {{p:number,a:number,b:number,c:number,d:number,e:number,f:number}[]} transforms - アフィン変換の配列
+ * @param {{p:number,a:number,b:number,c:number,d:number,e:number,f:number}[]} transforms
  * @returns {Float32Array} [x,y,z, x,y,z, ...] 形式のポジション配列
  */
 function generatePositions(depth, transforms) {
@@ -101,7 +152,7 @@ function BarnsleyFernPoints({ depth, transforms }) {
 }
 
 /* =========================
-   アフィン変換 編集パネル
+   調整パネル（プリセット + スライダー）
    ========================= */
 
 const basePanel = {
@@ -115,119 +166,146 @@ const basePanel = {
 };
 
 const desktopPanel = {
-  panel:        { ...basePanel, top: 16, right: 16, padding: "12px 14px", width: 280, fontSize: 12, maxHeight: "calc(100vh - 32px)", overflowY: "auto" },
-  header:       { display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: 8, borderBottom: `1px solid ${color.borderSubtle}`, marginBottom: 8 },
+  panel:        { ...basePanel, top: 16, right: 16, padding: "12px 14px", width: 240, fontSize: 12 },
+  header:       { display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: 8, borderBottom: `1px solid ${color.borderSubtle}`, marginBottom: 10 },
   title:        { fontWeight: 700, fontSize: 12, color: color.textPrimary },
   resetBtn:     { background: "rgba(220, 60, 80, 0.85)", color: "#fff", border: "none", borderRadius: shape.radiusSm, padding: "4px 9px", fontSize: 11, cursor: "pointer" },
-  trGroup:      { marginBottom: 10, paddingBottom: 8, borderBottom: `1px dashed ${color.borderSubtle}` },
-  trHeader:     { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 },
-  trLabel:      { color: color.textPrimary, fontSize: 12, fontWeight: 600 },
-  pField:       { display: "flex", alignItems: "center", gap: 4 },
-  pLabel:       { color: color.textSecondary, fontSize: 11 },
-  grid:         { display: "grid", gridTemplateColumns: "auto 1fr auto 1fr", gap: "4px 6px", alignItems: "center" },
-  fieldLabel:   { color: color.textSecondary, fontSize: 11, textAlign: "right" },
-  input:        { background: color.bgPanel, border: `1px solid ${color.borderDefault}`, borderRadius: shape.radiusSm, color: color.textPrimary, fontSize: 11, padding: "2px 5px", textAlign: "right", width: "100%", boxSizing: "border-box" },
-  hint:         { color: color.textMuted, fontSize: 10, marginTop: 4, lineHeight: 1.5 },
+  presetRow:    { display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 12 },
+  presetBtn:    { background: color.bgPanel, color: color.textSecondary, border: `1px solid ${color.borderDefault}`, borderRadius: shape.radiusSm, padding: "3px 8px", fontSize: 11, cursor: "pointer" },
+  presetBtnOn:  { background: color.purple, color: "#fff", border: "none" },
+  field:        { marginBottom: 9 },
+  labelRow:     { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 },
+  label:        { color: color.textSecondary, fontSize: 11 },
+  value:        { color: color.textPrimary, fontSize: 11 },
+  slider:       { width: "100%", accentColor: color.purple },
 };
 
 const mobilePanel = {
   ...desktopPanel,
   panel:        { ...basePanel, bottom: 12, left: 12, right: 12, padding: "8px 10px", fontSize: 11, maxHeight: "45vh", overflowY: "auto" },
   title:        { fontWeight: 700, fontSize: 11, color: color.textPrimary },
-  trGroup:      { marginBottom: 8, paddingBottom: 6, borderBottom: `1px dashed ${color.borderSubtle}` },
-  fieldLabel:   { color: color.textSecondary, fontSize: 10, textAlign: "right" },
-  input:        { background: color.bgPanel, border: `1px solid ${color.borderDefault}`, borderRadius: shape.radiusSm, color: color.textPrimary, fontSize: 10, padding: "1px 4px", textAlign: "right", width: "100%", boxSizing: "border-box" },
+  field:        { marginBottom: 6 },
 };
 
 /**
- * アフィン変換4つの全係数（a,b,c,d,e,f,p）を編集するパネル。
- *
- * @param {{ transforms: object[], onChange: (next: object[]) => void, onReset: () => void }} props
+ * 1スライダー入力。ラベル・値表示・range をひとまとめにする。
  */
-function TransformsEditor({ transforms, onChange, onReset }) {
-  const isMobile = useIsMobile();
-  const s = isMobile ? mobilePanel : desktopPanel;
-
-  function updateField(index, key, value) {
-    const next = transforms.map((t, i) =>
-      i === index ? { ...t, [key]: value } : t
-    );
-    onChange(next);
-  }
-
-  function parseNumber(str) {
-    const n = parseFloat(str);
-    return Number.isFinite(n) ? n : 0;
-  }
-
+function Slider({ label, value, min, max, step, format, onChange, styles }) {
   return (
-    <div style={s.panel}>
-      <div style={s.header}>
-        <span style={s.title}>アフィン変換</span>
-        <button type="button" style={s.resetBtn} onClick={onReset}>
-          リセット
-        </button>
+    <div style={styles.field}>
+      <div style={styles.labelRow}>
+        <span style={styles.label}>{label}</span>
+        <span style={styles.value}>{format ? format(value) : value}</span>
       </div>
-
-      {transforms.map((t, i) => (
-        <div key={i} style={s.trGroup}>
-          <div style={s.trHeader}>
-            <span style={s.trLabel}>{t.label}</span>
-            <div style={s.pField}>
-              <span style={s.pLabel}>p</span>
-              <input
-                type="number"
-                step="0.01"
-                value={t.p}
-                onChange={(e) => updateField(i, "p", parseNumber(e.target.value))}
-                style={{ ...s.input, width: 56 }}
-              />
-            </div>
-          </div>
-          <div style={s.grid}>
-            {[
-              ["a", t.a], ["b", t.b],
-              ["c", t.c], ["d", t.d],
-              ["e", t.e], ["f", t.f],
-            ].map(([key, value]) => (
-              <Cell
-                key={key}
-                label={key}
-                value={value}
-                styles={s}
-                onChange={(v) => updateField(i, key, v)}
-                parse={parseNumber}
-              />
-            ))}
-          </div>
-        </div>
-      ))}
-
-      <div style={s.hint}>
-        x' = a·x + b·y + e<br />
-        y' = c·x + d·y + f<br />
-        確率 p は自動正規化されます。
-      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(parseFloat(e.target.value))}
+        style={styles.slider}
+      />
     </div>
   );
 }
 
 /**
- * グリッド内の「ラベル＋数値入力」1セル。
- * Cell は label と input の2要素を React.Fragment で並べて返す。
+ * 意味付けされたパラメータを編集するパネル。
+ * プリセットでスナップ → スライダーで微調整、という流れを想定。
+ *
+ * @param {{ params: typeof DEFAULT_PARAMS, onChange: (next: typeof DEFAULT_PARAMS) => void }} props
  */
-function Cell({ label, value, styles, onChange, parse }) {
+function FernEditor({ params, onChange }) {
+  const isMobile = useIsMobile();
+  const s = isMobile ? mobilePanel : desktopPanel;
+
+  const activePreset = Object.entries(PRESETS).find(([, preset]) =>
+    Object.keys(preset.params).every((k) => preset.params[k] === params[k])
+  )?.[0];
+
+  function update(key, value) {
+    onChange({ ...params, [key]: value });
+  }
+
   return (
-    <>
-      <span style={styles.fieldLabel}>{label}</span>
-      <input
-        type="number"
-        step="0.01"
-        value={value}
-        onChange={(e) => onChange(parse(e.target.value))}
-        style={styles.input}
+    <div style={s.panel}>
+      <div style={s.header}>
+        <span style={s.title}>シダの形</span>
+        <button
+          type="button"
+          style={s.resetBtn}
+          onClick={() => onChange({ ...DEFAULT_PARAMS })}
+        >
+          リセット
+        </button>
+      </div>
+
+      <div style={s.presetRow}>
+        {Object.entries(PRESETS).map(([key, preset]) => (
+          <button
+            key={key}
+            type="button"
+            style={{
+              ...s.presetBtn,
+              ...(activePreset === key ? s.presetBtnOn : {}),
+            }}
+            onClick={() => onChange({ ...preset.params })}
+          >
+            {preset.label}
+          </button>
+        ))}
+      </div>
+
+      <Slider
+        label="葉の傾き"
+        value={params.leafTiltDeg}
+        min={-15} max={20} step={0.5}
+        format={(v) => `${v.toFixed(1)}°`}
+        onChange={(v) => update("leafTiltDeg", v)}
+        styles={s}
       />
-    </>
+      <Slider
+        label="葉の大きさ"
+        value={params.leafScale}
+        min={0.6} max={0.95} step={0.01}
+        format={(v) => v.toFixed(2)}
+        onChange={(v) => update("leafScale", v)}
+        styles={s}
+      />
+      <Slider
+        label="左小葉の大きさ"
+        value={params.leftLeafletSize}
+        min={0} max={1.6} step={0.05}
+        format={(v) => v.toFixed(2)}
+        onChange={(v) => update("leftLeafletSize", v)}
+        styles={s}
+      />
+      <Slider
+        label="右小葉の大きさ"
+        value={params.rightLeafletSize}
+        min={0} max={1.6} step={0.05}
+        format={(v) => v.toFixed(2)}
+        onChange={(v) => update("rightLeafletSize", v)}
+        styles={s}
+      />
+      <Slider
+        label="茎の長さ"
+        value={params.stemHeight}
+        min={0.8} max={2.4} step={0.05}
+        format={(v) => v.toFixed(2)}
+        onChange={(v) => update("stemHeight", v)}
+        styles={s}
+      />
+      <Slider
+        label="小葉の出現比率"
+        value={params.leafletRatio}
+        min={0} max={0.5} step={0.01}
+        format={(v) => `${(v * 100).toFixed(0)}%`}
+        onChange={(v) => update("leafletRatio", v)}
+        styles={s}
+      />
+    </div>
   );
 }
 
@@ -239,17 +317,14 @@ function Cell({ label, value, styles, onChange, parse }) {
  * バーンズリーのシダの完全なシーン。
  */
 export default function BarnsleyFern() {
-  const [transforms, setTransforms] = useState(DEFAULT_TRANSFORMS);
+  const [params, setParams] = useState(DEFAULT_PARAMS);
+  const transforms = useMemo(() => paramsToTransforms(params), [params]);
 
   return (
     <ControlPanel maxDepth={5} defaultDepth={3} defaultInterval={500} enableWireframe={false}>
       {({ currentDepth }) => (
         <>
-          <TransformsEditor
-            transforms={transforms}
-            onChange={setTransforms}
-            onReset={() => setTransforms(DEFAULT_TRANSFORMS)}
-          />
+          <FernEditor params={params} onChange={setParams} />
           <FractalScene>
             <BarnsleyFernPoints depth={currentDepth} transforms={transforms} />
           </FractalScene>
