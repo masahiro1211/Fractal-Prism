@@ -1,7 +1,9 @@
-import { useMemo } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useFrame } from "@react-three/fiber";
 import { Line } from "@react-three/drei";
 import FractalScene from "../../components/FractalScene";
 import ControlPanel from "../../components/ControlPanel";
+import PanelCheckbox from "../../components/PanelCheckbox";
 
 /* =========================
    3次元ヒルベルト曲線 生成ロジック
@@ -65,7 +67,7 @@ function generatePoints(depth) {
   for (const p of out) {
     maxCoord = Math.max(maxCoord, Math.abs(p[0]), Math.abs(p[1]), Math.abs(p[2]));
   }
-  
+
   if (maxCoord > 0) {
     for (let i = 0; i < out.length; i++) {
       out[i][0] /= maxCoord;
@@ -78,11 +80,11 @@ function generatePoints(depth) {
 }
 
 /* =========================
-   コンポーネント
+   描画コンポーネント
    ========================= */
 
 /**
- * 3次元ヒルベルト曲線のラインコンポーネント。
+ * 3次元ヒルベルト曲線のラインコンポーネント（静的描画モード）。
  * drei の Line を使うことで lineWidth による太線描画が可能。
  *
  * @param {{ depth: number }} props
@@ -93,14 +95,89 @@ function HilbertLine({ depth }) {
 }
 
 /**
+ * 3次元ヒルベルト曲線の追跡描画モード。
+ * drei の Line（内部は Line2 / LineSegmentsGeometry）を ref 経由で取り、
+ * 毎フレーム instanceCount を増やすことで太線のまま順次描画する演出を行う。
+ * 最新の頂点位置にはヘッドマーカー(黄色の球)を置く。
+ *
+ * @param {{ depth: number, stepInterval: number }} props
+ */
+function HilbertLineTracking({ depth, stepInterval }) {
+  const points = useMemo(() => generatePoints(depth), [depth]);
+
+  const lineRef = useRef(null);
+  const visibleCountRef = useRef(0);
+  const headRef = useRef(null);
+
+  // depth=0 へのリセットでは先頭から描き直す
+  useEffect(() => {
+    if (depth <= 0) visibleCountRef.current = 0;
+  }, [depth]);
+
+  // points が変わった直後（geometry 再構築後）に、前の表示セグメント数へ揃える
+  useLayoutEffect(() => {
+    const totalSegments = Math.max(0, points.length - 1);
+    if (visibleCountRef.current > totalSegments) {
+      visibleCountRef.current = totalSegments;
+    }
+    if (lineRef.current?.geometry) {
+      lineRef.current.geometry.instanceCount = visibleCountRef.current;
+    }
+  }, [points]);
+
+  useFrame(() => {
+    const totalSegments = Math.max(0, points.length - 1);
+    if (visibleCountRef.current < totalSegments) {
+      // 自動ステップ送り（stepInterval ms）の 80% 以内に描き終わるよう step を決める。
+      // 60fps 想定で frames = stepInterval * 0.8 / (1000/60)
+      const targetFrames = Math.max(1, (stepInterval * 0.8) / (1000 / 60));
+      const step = Math.max(2, Math.ceil(totalSegments / targetFrames));
+      visibleCountRef.current = Math.min(totalSegments, visibleCountRef.current + step);
+    }
+    if (lineRef.current?.geometry) {
+      lineRef.current.geometry.instanceCount = visibleCountRef.current;
+    }
+    if (headRef.current && visibleCountRef.current > 0) {
+      const p = points[visibleCountRef.current];
+      headRef.current.position.set(p[0], p[1], p[2]);
+    }
+  });
+
+  return (
+    <>
+      <Line ref={lineRef} points={points} color="#a78bfa" lineWidth={2} />
+      <mesh ref={headRef}>
+        <sphereGeometry args={[0.025, 12, 12]} />
+        <meshBasicMaterial color="#fde047" />
+      </mesh>
+    </>
+  );
+}
+
+/* =========================
+   全体シーン
+   ========================= */
+
+/**
  * 3次元ヒルベルト曲線の完全なシーン。
  */
 export default function HilbertCurve() {
+  const [tracking, setTracking] = useState(false);
+
   return (
-    <ControlPanel maxDepth={6} defaultDepth={4} defaultInterval={600}>
-      {({ currentDepth }) => (
+    <ControlPanel
+      maxDepth={6}
+      defaultDepth={4}
+      defaultInterval={600}
+      extraControls={
+        <PanelCheckbox label="追跡モード" checked={tracking} onChange={setTracking} />
+      }
+    >
+      {({ currentDepth, stepInterval }) => (
         <FractalScene>
-          <HilbertLine depth={currentDepth} />
+          {tracking
+            ? <HilbertLineTracking depth={currentDepth} stepInterval={stepInterval} />
+            : <HilbertLine depth={currentDepth} />}
         </FractalScene>
       )}
     </ControlPanel>
