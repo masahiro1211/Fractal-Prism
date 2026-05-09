@@ -65,8 +65,14 @@ const colorDark = {
   accent1:       '#00ffe0',
   accent1Light:  '#80fff0',
   accent1Dim:    'rgba(0, 255, 200, 0.15)',
+  accent1Text:   '#001a14',
   accent2:       '#ff6ad5',
   accent2Dim:    'rgba(255, 106, 213, 0.15)',
+
+  bgPanelStrong: 'rgba(0, 255, 200, 0.04)',
+  bgPanelWide:   'rgba(0, 255, 200, 0.04)',
+  bgInfo:        'rgba(0, 255, 200, 0.04)',
+  bgCard:        'rgba(0, 255, 200, 0.04)',
 }
 
 const colorLight = {
@@ -97,8 +103,14 @@ const colorLight = {
   accent1:       '#c0583a',
   accent1Light:  '#d98060',
   accent1Dim:    'rgba(192, 88, 58, 0.12)',
+  accent1Text:   '#ffffff',
   accent2:       '#3a7d8c',
   accent2Dim:    'rgba(58, 125, 140, 0.12)',
+
+  bgPanelStrong: '#fff9f4',
+  bgPanelWide:   '#f8f7e9d2',
+  bgInfo:        '#fcecdf',
+  bgCard:        '#f5efda',
 }
 
 // ── shapeトークン定義 ─────────────────────────────────────────
@@ -121,11 +133,11 @@ const shapeLight = {
 // テーマが変わるたびに再生成される。
 
 function buildPageStyles(color, shape, isDark) {
-  const panelBg     = isDark ? color.bgPanel : '#fff9f4'
-  const panelWideBg = isDark ? color.bgPanel : '#f8f7e9d2'
-  const infoBg      = isDark ? color.bgPanel : '#fcecdf'
-  const cardBg      = isDark ? color.bgPanel : '#f5efda'
-  const tabBg       = isDark ? color.bgPanel : 'rgba(180, 100, 60, 0.04)'
+  const panelBg     = color.bgPanelStrong
+  const panelWideBg = color.bgPanelWide
+  const infoBg      = color.bgInfo
+  const cardBg      = color.bgCard
+  const tabBg       = color.bgPanel
   const fontFamily  = isDark
     ? "'Courier New', monospace, sans-serif"
     : 'Georgia, serif'
@@ -198,7 +210,7 @@ function buildPageStyles(color, shape, isDark) {
     primaryButton: {
       border: 'none',
       background: color.accent1,
-      color: isDark ? '#001a14' : '#fff',
+      color: color.accent1Text,
       borderRadius: shape.radiusSm,
       fontWeight: 700,
       fontSize: 14,
@@ -329,7 +341,7 @@ function buildPageStyles(color, shape, isDark) {
 
     tabButtonActive: {
       background: color.accent1,
-      color: isDark ? '#001a14' : '#fff',
+      color: color.accent1Text,
       borderColor: color.accent1,           // ← active 側も borderColor で統一
       fontWeight: 700,
       top: 0,

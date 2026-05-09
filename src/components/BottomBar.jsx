@@ -22,7 +22,7 @@ export default function BottomBar({ step, nextLabel, onNext, backLabel, onBack }
   const barStyle = {
     padding: '10px 24px 24px',
     background: color.bgPage,
-    borderTop: `1px solid rgba(255, 255, 255, 0.07)`,
+    borderTop: `1px solid ${color.borderSubtle}`,
     display: 'flex',
     flexDirection: 'column',
     gap: 10,

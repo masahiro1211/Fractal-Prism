@@ -64,7 +64,7 @@ export default function ModelSelectionPage() {
     alignItems: 'center',
     gap: 16,
     padding: '12px 24px 14px',
-    borderTop: `1px solid rgba(255, 255, 255, 0.07)`,
+    borderTop: `1px solid ${color.borderSubtle}`,
     background: color.bgPage,
   }
   //─────────────────────────────────────────────

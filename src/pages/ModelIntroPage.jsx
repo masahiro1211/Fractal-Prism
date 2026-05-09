@@ -138,7 +138,7 @@ export default function ModelIntroPage() {
     height: 220,
     borderRadius: shape.radiusSm,
     border: `1px dashed ${color.borderDefault}`,
-    background: 'rgba(255, 255, 255, 0.02)',
+    background: color.bgPanel,
     overflow: 'hidden',
     display: 'flex',
     alignItems: 'center',
@@ -147,8 +147,8 @@ export default function ModelIntroPage() {
 
   const statStyle = {
     flex: 1,
-    background: 'rgba(255, 255, 255, 0.04)',
-    border: `1px solid rgba(255, 255, 255, 0.08)`,
+    background: color.bgPanel,
+    border: `1px solid ${color.borderSubtle}`,
     borderRadius: shape.radiusSm,
     padding: '8px 6px',
     textAlign: 'center',
