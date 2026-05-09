@@ -157,9 +157,11 @@ export default function ControlPanel({
                 disabled={isPlaying}
                 style={{
                   ...s.button,
-                  background: isPlaying ? color.cpInput : color.accent2,
-                  color: isPlaying ? color.cpTextin : color.cpTextin,
-                  border: isPlaying ? `1px solid ${color.cpBorder}` : "none",
+                  ...(isPlaying ? {
+                    background: color.cpInput,
+                    color: color.cpTextin,
+                    border: `1px solid ${color.cpBorder}`,
+                  } : {}),
                 }}
               >
                 生成スタート
@@ -169,9 +171,15 @@ export default function ControlPanel({
                 disabled={isFinished && !isPlaying}
                 style={{
                   ...s.button,
-                  background: isFinished && !isPlaying ? color.cpInput : color.cpResume,
-                  color: isFinished && !isPlaying ? color.cpTextin : color.cpText,
-                  border: isFinished && !isPlaying ? `1px solid ${color.cpBorder}` : "none",
+                  ...(isFinished && !isPlaying ? {
+                    background: color.cpInput,
+                    color: color.cpTextin,
+                    border: `1px solid ${color.cpBorder}`,
+                  } : {
+                    background: color.cpResume,
+                    color: color.cpResumeText,
+                    border: "none",
+                  }),
                 }}
               >
                 {isPlaying ? "一時停止" : "再開"}
@@ -180,8 +188,8 @@ export default function ControlPanel({
                 onClick={reset}
                 style={{
                   ...s.button,
-                  background: "rgba(220, 60, 80, 0.85)",
-                  color: color.cpTextin,
+                  background: color.cpReset,
+                  color: color.cpResetText,
                   border: "none",
                 }}
               >
