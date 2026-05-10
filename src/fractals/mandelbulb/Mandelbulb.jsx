@@ -148,7 +148,8 @@ export default function Mandelbulb() {
           </div>
 
           <Canvas
-            style={{ width: "100vw", height: "100dvh" }}
+            style={{ width: "100vw", height: "100dvh", background: color.bgPage }}
+            gl={{ alpha: true }}
             camera={{ position: [0, 0, 3.0], fov: 50 }}
             dpr={[1, isMobile ? 1.25 : 2]}
           >
