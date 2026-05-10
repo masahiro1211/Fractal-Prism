@@ -93,9 +93,9 @@ function generatePoints(depth) {
  *
  * @param {{ depth: number }} props
  */
-function HilbertLine({ depth, color }) {
+function HilbertLine({ depth, color, lineWidth }) {
   const points = useMemo(() => generatePoints(depth), [depth]);
-  return <Line points={points} color={color} lineWidth={2} />;
+  return <Line points={points} color={color} lineWidth={lineWidth} />;
 }
 
 /**
@@ -106,7 +106,7 @@ function HilbertLine({ depth, color }) {
  *
  * @param {{ depth: number, stepInterval: number }} props
  */
-function HilbertLineTracking({ depth, stepInterval, lineColor, headColor }) {
+function HilbertLineTracking({ depth, stepInterval, lineColor, headColor, lineWidth }) {
   const points = useMemo(() => generatePoints(depth), [depth]);
 
   const lineRef = useRef(null);
@@ -149,7 +149,7 @@ function HilbertLineTracking({ depth, stepInterval, lineColor, headColor }) {
 
   return (
     <>
-      <Line ref={lineRef} points={points} color={lineColor} lineWidth={2} />
+      <Line ref={lineRef} points={points} color={lineColor} lineWidth={lineWidth} />
       <mesh ref={headRef}>
         <sphereGeometry args={[0.025, 12, 12]} />
         <meshBasicMaterial color={headColor} />
@@ -171,6 +171,11 @@ export default function HilbertCurve() {
   const lineColor = MODEL.meshColor[theme];
   const headColor = MODEL.meshAccentColor[theme];
 
+  // 輻射錯視（Helmholtz irradiation illusion）への対策。
+  // 明るい背景上の暗い線は、同じ物理太さでも暗い背景上の明るい線より細く見える。
+  // ライト時のみ線幅を約30%太くして、ダーク時と知覚上の太さを揃える。
+  const lineWidth = theme === 'light' ? 2.6 : 2;
+
   return (
     <ControlPanel
       maxDepth={6}
@@ -183,8 +188,8 @@ export default function HilbertCurve() {
       {({ currentDepth, stepInterval }) => (
         <FractalScene>
           {tracking
-            ? <HilbertLineTracking depth={currentDepth} stepInterval={stepInterval} lineColor={lineColor} headColor={headColor} />
-            : <HilbertLine depth={currentDepth} color={lineColor} />}
+            ? <HilbertLineTracking depth={currentDepth} stepInterval={stepInterval} lineColor={lineColor} headColor={headColor} lineWidth={lineWidth} />
+            : <HilbertLine depth={currentDepth} color={lineColor} lineWidth={lineWidth} />}
         </FractalScene>
       )}
     </ControlPanel>

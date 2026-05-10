@@ -258,7 +258,7 @@ $$M = \bigcup_{i=1}^{20} f_i(M)$$
     path: 'hilbert',
     name: '3次元ヒルベルト曲線',
     image: '/images/hilbert.png',
-    meshColor:       { dark: '#a78bfa', light: '#5333cc' },
+    meshColor:       { dark: '#a78bfa', light: '#4d3463' },
     meshAccentColor: { dark: '#fde047', light: '#a98712' },
     intro: {
       beginner: {
