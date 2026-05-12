@@ -7,7 +7,6 @@ import PanelCheckbox from "../../components/PanelCheckbox";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { useTheme } from "../../styles/pageStyles";
 import { vertexShader, fragmentShader } from "./mandelbulbShader";
-import { getFractalCatalogByPath } from "../../models/fractalCatalog";
 
 
 /**
@@ -65,7 +64,7 @@ function MandelbulbBackground({ power, bailout, maxIterCap, shadow }) {
 export default function Mandelbulb() {
   const { color, shape } = useTheme();
   const [power, setPower] = useState(8);
-  const [bailout, setBailout] = useState(4);
+  const [bailout] = useState(4);
   const [shadow, setShadow] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const isMobile = useIsMobile();
