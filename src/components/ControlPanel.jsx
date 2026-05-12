@@ -125,7 +125,7 @@ export default function ControlPanel({
           <>
             {/* パラメータ入力 */}
             <div style={{ ...s.row, marginTop: isMobile ? 8 : 10 }}>
-              <span style={s.label}>目標深さ（depth）</span>
+              <span style={s.label}>ステップ数（depth）</span>
               <input
                 type="number"
                 min={0}
