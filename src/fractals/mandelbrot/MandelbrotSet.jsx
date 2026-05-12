@@ -76,7 +76,7 @@ export default function MandelbrotSet() {
             onResetView={resetView}
           />
           <MandelbrotCanvas
-            maxIter={Math.max(1, currentDepth || 120)}
+            maxIter={Math.max(2, currentDepth)}
             bailout={bailout}
             isMobile={isMobile}
             background={color.bgPage}

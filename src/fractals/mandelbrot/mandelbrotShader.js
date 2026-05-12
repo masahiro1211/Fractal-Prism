@@ -23,8 +23,8 @@ uniform float uBailout;
 // 反復回数の上限。ControlPanel の maxDepth と合わせる。
 const int MAX_ITER_CONST = 360;
 
-void main() {
-  vec2 c = vCoord;
+// 1サンプル分のマンデルブロ計算と色付け。
+vec3 sampleColor(vec2 c) {
   vec2 z = vec2(0.0);
   float bailout2 = uBailout * uBailout;
   int maxIter = int(uMaxIterF);
@@ -48,21 +48,33 @@ void main() {
   }
 
   if (!escaped) {
-    // 集合内部: 暗い色
-    gl_FragColor = vec4(5.0 / 255.0, 7.0 / 255.0, 20.0 / 255.0, 1.0);
-    return;
+    return vec3(5.0 / 255.0, 7.0 / 255.0, 20.0 / 255.0);
   }
 
-  // 滑らかな反復回数 (mandelbrotMath.js の writeColor と同じ式)
   float smoothIter = iter + 1.0 - log2(max(1.0, log2(max(radius, 1.0001))));
   float t = clamp(smoothIter / uMaxIterF, 0.0, 1.0);
   float glow = pow(t, 0.58);
   float band = 0.5 + 0.5 * sin(18.0 * t + uBailout * 0.75);
 
-  float r = (1.0 + 42.0 * glow + 96.0 * glow * band) / 255.0;
-  float g = (1.0 + 68.0 * glow + 120.0 * pow(t, 1.15) * (1.0 - band * 0.25)) / 255.0;
-  float b = (30.0 + 72.0 * glow + 96.0 * glow * band) / 255.0;
+  return vec3(
+    (1.0 + 42.0 * glow + 96.0 * glow * band) / 255.0,
+    (1.0 + 68.0 * glow + 120.0 * pow(t, 1.15) * (1.0 - band * 0.25)) / 255.0,
+    (30.0 + 72.0 * glow + 96.0 * glow * band) / 255.0
+  );
+}
 
-  gl_FragColor = vec4(r, g, b, 1.0);
+void main() {
+  // 1ピクセルあたりのワールド座標差分を取得 → 2×2 サブピクセル位置をオフセット。
+  // dFdx/dFdy は分岐の外で評価する必要があるためここで取得する。
+  vec2 dx = dFdx(vCoord);
+  vec2 dy = dFdy(vCoord);
+
+  vec3 c0 = sampleColor(vCoord - 0.25 * dx - 0.25 * dy);
+  vec3 c1 = sampleColor(vCoord + 0.25 * dx - 0.25 * dy);
+  vec3 c2 = sampleColor(vCoord - 0.25 * dx + 0.25 * dy);
+  vec3 c3 = sampleColor(vCoord + 0.25 * dx + 0.25 * dy);
+
+  vec3 col = (c0 + c1 + c2 + c3) * 0.25;
+  gl_FragColor = vec4(col, 1.0);
 }
 `;
