@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import { INITIAL_MANDELBROT_VIEW } from "./mandelbrotMath";
 
 export default function MandelbrotControls({
@@ -6,19 +5,19 @@ export default function MandelbrotControls({
   shape,
   pageStyles,
   isMobile,
-  maxIter,
-  setMaxIter,
   bailout,
   setBailout,
   setView,
 }) {
   const panelStyle = {
     position: "absolute",
-    top: isMobile ? 12 : 16,
+    top: isMobile ? "auto" : 16,
+    bottom: isMobile ? 12 : "auto",
     right: isMobile ? 12 : 16,
-    width: isMobile ? "calc(100vw - 24px)" : 280,
+    left: isMobile ? 12 : "auto",
+    width: isMobile ? "auto" : 300,
     maxWidth: "calc(100vw - 24px)",
-    padding: isMobile ? "9px 10px" : "12px 14px",
+    padding: isMobile ? "10px 12px" : "12px 14px",
     background: color.cpOverlay,
     color: color.cpText,
     border: `1px solid ${color.cpBorder}`,
@@ -42,44 +41,14 @@ export default function MandelbrotControls({
   };
 
   const compactButton = {
-    padding: "6px 10px",
-    fontSize: 11,
+    padding: isMobile ? "6px 10px" : "7px 12px",
+    fontSize: isMobile ? 11 : 12,
     textDecoration: "none",
   };
 
   return (
     <section style={panelStyle}>
-      <div style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        gap: 10,
-        paddingBottom: 8,
-        borderBottom: `1px solid ${color.cpSubtle}`,
-      }}>
-        <strong style={{ fontSize: isMobile ? 12 : 13 }}>マンデルブロ集合</strong>
-        <Link to="/models" style={{ ...pageStyles.outlineButton, padding: "4px 8px", fontSize: 11 }}>
-          一覧へ
-        </Link>
-      </div>
-
-      <div style={{ marginTop: 10 }}>
-        <div style={labelStyle}>
-          <span>反復上限</span>
-          <strong>{maxIter}</strong>
-        </div>
-        <input
-          type="range"
-          min="40"
-          max="360"
-          step="10"
-          value={maxIter}
-          onChange={(event) => setMaxIter(Number(event.target.value))}
-          style={sliderStyle}
-        />
-      </div>
-
-      <div style={{ marginTop: 10 }}>
+      <div>
         <div style={labelStyle}>
           <span>発散判定半径</span>
           <strong>{bailout.toFixed(1)}</strong>
@@ -93,8 +62,8 @@ export default function MandelbrotControls({
           onChange={(event) => setBailout(Number(event.target.value))}
           style={sliderStyle}
         />
-        <p style={{ margin: "4px 0 0", color: color.cpText, fontSize: isMobile ? 10 : 11, lineHeight: 1.45 }}>
-          標準は2です。小さくすると、判定が厳しくなり形も変わります。
+        <p style={{ margin: "8px 0 0", color: color.cpText, fontSize: isMobile ? 10 : 11, lineHeight: 1.45 }}>
+          標準は2です。小さくすると判定が厳しくなります。
         </p>
       </div>
 
@@ -118,12 +87,12 @@ export default function MandelbrotControls({
           onClick={() => setView(INITIAL_MANDELBROT_VIEW)}
           style={{ ...pageStyles.outlineButton, ...compactButton }}
         >
-          リセット
+          表示リセット
         </button>
       </div>
 
-      <p style={{ margin: "10px 0 0", color: color.cpText, fontSize: isMobile ? 10 : 11, lineHeight: 1.5 }}>
-        ドラッグで移動、ホイールで拡大縮小。黒い部分は最後まで発散しなかった点です。
+      <p style={{ margin: "12px 0 0", color: color.cpText, fontSize: isMobile ? 10 : 11, lineHeight: 1.45 }}>
+        ドラッグで移動、ホイールで拡大縮小できます。
       </p>
     </section>
   );
