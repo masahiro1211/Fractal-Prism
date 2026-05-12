@@ -76,5 +76,6 @@ void main() {
 
   vec3 col = (c0 + c1 + c2 + c3) * 0.25;
   gl_FragColor = vec4(col, 1.0);
+  #include <colorspace_fragment>
 }
 `;

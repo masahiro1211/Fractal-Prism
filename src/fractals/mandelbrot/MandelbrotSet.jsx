@@ -16,8 +16,8 @@ export default function MandelbrotSet() {
   const { color, theme } = useTheme();
   const isMobile = useIsMobile();
   const [bailout, setBailout] = useState(2);
-  const insideColor = MODEL.meshColor[theme];
-  const accentColor = MODEL.meshAccentColor[theme];
+  const insideColor = color.bgPage;
+  const accentColor = MODEL.meshColor[theme];
 
   const cameraRef = useRef(null);
   const controlsRef = useRef(null);
