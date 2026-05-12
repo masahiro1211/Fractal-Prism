@@ -1,23 +1,52 @@
+import { useState } from "react";
+import { useIsMobile } from "../../hooks/useIsMobile";
+import { useTheme } from "../../styles/pageStyles";
 import { INITIAL_MANDELBROT_VIEW } from "./mandelbrotMath";
 
-export default function MandelbrotControls({
-  color,
-  shape,
-  pageStyles,
-  isMobile,
-  bailout,
-  setBailout,
-  setView,
-}) {
-  const panelStyle = {
+const DEFAULT_BAILOUT = 2;
+
+/* =========================
+   コンポーネント
+   ========================= */
+
+/**
+ * 1スライダー入力。ラベル・値表示・range をひとまとめにする。
+ */
+function Slider({ label, value, min, max, step, format, onChange, styles }) {
+  return (
+    <div style={styles.field}>
+      <div style={styles.labelRow}>
+        <span style={styles.label}>{label}</span>
+        <span style={styles.value}>{format ? format(value) : value}</span>
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(parseFloat(e.target.value))}
+        style={styles.slider}
+      />
+    </div>
+  );
+}
+
+/**
+ * マンデルブロ集合の表示パラメータ調整パネル。
+ * バーンズリーのシダ（FernEditor）と同じ構造で構成する。
+ */
+export default function MandelbrotControls({ bailout, setBailout, setView }) {
+  const isMobile = useIsMobile();
+  const [isMinimized, setIsMinimized] = useState(false);
+  const { color, shape, pageStyles } = useTheme();
+
+  /* =========================
+     調整パネル スタイル
+     ========================= */
+
+  const basePanel = {
     position: "absolute",
-    top: isMobile ? "auto" : 16,
-    bottom: isMobile ? 12 : "auto",
-    right: isMobile ? 12 : 16,
-    left: isMobile ? 12 : "auto",
-    width: isMobile ? "auto" : 300,
-    maxWidth: "calc(100vw - 24px)",
-    padding: isMobile ? "10px 12px" : "12px 14px",
     background: color.cpOverlay,
     color: color.cpText,
     border: `1px solid ${color.cpBorder}`,
@@ -26,74 +55,107 @@ export default function MandelbrotControls({
     zIndex: 10,
   };
 
-  const labelStyle = {
-    display: "flex",
-    justifyContent: "space-between",
-    gap: 12,
-    color: color.cpText,
-    fontSize: isMobile ? 11 : 12,
+  const desktopPanel = {
+    panel:        { ...basePanel, top: 16, right: 16, padding: "12px 14px", width: 240, fontSize: 12 },
+    header:       { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, paddingBottom: 8, borderBottom: `1px solid ${color.cpSubtle}`, marginBottom: 10 },
+    title:        { fontWeight: 700, fontSize: 12, color: color.cpText },
+    resetBtn:     { background: color.cpReset, color: color.cpResetText, border: "none", borderRadius: shape.radiusSm, padding: "4px 9px", fontSize: 11, cursor: "pointer" },
+    field:        { marginBottom: 9 },
+    labelRow:     { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 },
+    label:        { color: color.cpText, fontSize: 11 },
+    value:        { color: color.cpText, fontSize: 11 },
+    slider:       { width: "100%", accentColor: color.accent1 },
+    buttonRow:    { display: "flex", gap: 6, flexWrap: "wrap", marginTop: 4 },
+    button:       { ...pageStyles.primaryButton, padding: "6px 10px", fontSize: 11 },
+    outlineBtn:   { ...pageStyles.outlineButton, padding: "6px 10px", fontSize: 11, textDecoration: "none" },
+    hint:         { margin: "10px 0 0", color: color.cpText, fontSize: 11, lineHeight: 1.45 },
   };
 
-  const sliderStyle = {
-    width: "100%",
-    marginTop: 4,
-    accentColor: color.accent1,
+  const mobilePanel = {
+    ...desktopPanel,
+    panel:        { ...basePanel, bottom: 12, left: 12, right: 12, padding: "8px 10px", fontSize: 11, maxHeight: "45vh", overflowY: "auto" },
+    title:        { fontWeight: 700, fontSize: 11, color: color.cpText },
+    field:        { marginBottom: 6 },
+    button:       { ...pageStyles.primaryButton, padding: "5px 9px", fontSize: 11 },
+    outlineBtn:   { ...pageStyles.outlineButton, padding: "5px 9px", fontSize: 11, textDecoration: "none" },
+    hint:         { margin: "8px 0 0", color: color.cpText, fontSize: 10, lineHeight: 1.45 },
   };
 
-  const compactButton = {
-    padding: isMobile ? "6px 10px" : "7px 12px",
-    fontSize: isMobile ? 11 : 12,
-    textDecoration: "none",
-  };
+  const s = isMobile ? mobilePanel : desktopPanel;
+
+  function handleReset() {
+    setBailout(DEFAULT_BAILOUT);
+    setView(INITIAL_MANDELBROT_VIEW);
+  }
 
   return (
-    <section style={panelStyle}>
-      <div>
-        <div style={labelStyle}>
-          <span>発散判定半径</span>
-          <strong>{bailout.toFixed(1)}</strong>
-        </div>
-        <input
-          type="range"
-          min="1.2"
-          max="2"
-          step="0.1"
-          value={bailout}
-          onChange={(event) => setBailout(Number(event.target.value))}
-          style={sliderStyle}
-        />
-        <p style={{ margin: "8px 0 0", color: color.cpText, fontSize: isMobile ? 10 : 11, lineHeight: 1.45 }}>
-          標準は2です。小さくすると判定が厳しくなります。
-        </p>
-      </div>
-
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
+    <div style={s.panel}>
+      <div style={s.header}>
+        <span style={s.title}>マンデルブロ集合</span>
         <button
-          type="button"
-          onClick={() => setView((view) => ({ ...view, width: Math.max(0.0008, view.width * 0.75) }))}
-          style={{ ...pageStyles.primaryButton, ...compactButton }}
+          onClick={() => setIsMinimized((v) => !v)}
+          style={{
+            background: 'transparent',
+            border: `1px solid ${color.cpBorder}`,
+            borderRadius: shape.radiusSm,
+            color: color.cpText,
+            cursor: 'pointer',
+            fontSize: 11,
+            padding: '2px 7px',
+            lineHeight: 1,
+          }}
         >
-          拡大
+          {isMinimized ? '▲' : '▼'}
         </button>
         <button
           type="button"
-          onClick={() => setView((view) => ({ ...view, width: Math.min(8, view.width * 1.3) }))}
-          style={{ ...pageStyles.outlineButton, ...compactButton }}
+          style={s.resetBtn}
+          onClick={handleReset}
         >
-          縮小
-        </button>
-        <button
-          type="button"
-          onClick={() => setView(INITIAL_MANDELBROT_VIEW)}
-          style={{ ...pageStyles.outlineButton, ...compactButton }}
-        >
-          表示リセット
+          リセット
         </button>
       </div>
 
-      <p style={{ margin: "12px 0 0", color: color.cpText, fontSize: isMobile ? 10 : 11, lineHeight: 1.45 }}>
-        ドラッグで移動、ホイールで拡大縮小できます。
-      </p>
-    </section>
+      {!isMinimized && (
+        <>
+          <Slider
+            label="発散判定半径"
+            value={bailout}
+            min={1.2} max={2} step={0.1}
+            format={(v) => v.toFixed(1)}
+            onChange={setBailout}
+            styles={s}
+          />
+
+          <div style={s.buttonRow}>
+            <button
+              type="button"
+              onClick={() => setView((view) => ({ ...view, width: Math.max(0.0008, view.width * 0.75) }))}
+              style={s.button}
+            >
+              拡大
+            </button>
+            <button
+              type="button"
+              onClick={() => setView((view) => ({ ...view, width: Math.min(8, view.width * 1.3) }))}
+              style={s.outlineBtn}
+            >
+              縮小
+            </button>
+            <button
+              type="button"
+              onClick={() => setView(INITIAL_MANDELBROT_VIEW)}
+              style={s.outlineBtn}
+            >
+              表示リセット
+            </button>
+          </div>
+
+          <p style={s.hint}>
+            ドラッグで移動、ホイールで拡大縮小できます。
+          </p>
+        </>
+      )}
+    </div>
   );
 }

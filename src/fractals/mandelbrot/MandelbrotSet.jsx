@@ -7,19 +7,25 @@ import MandelbrotControls from "./MandelbrotControls";
 import { INITIAL_MANDELBROT_VIEW } from "./mandelbrotMath";
 
 export default function MandelbrotSet() {
-  const { color, shape, pageStyles } = useTheme();
+  const { color } = useTheme();
   const isMobile = useIsMobile();
   const [view, setView] = useState(INITIAL_MANDELBROT_VIEW);
   const [bailout, setBailout] = useState(2);
 
   return (
-    <main style={{ width: "100vw", height: "100dvh", background: color.bgPage, overflow: "hidden" }}>
-      <ControlPanel
-        maxDepth={360}
-        defaultDepth={120}
-        defaultInterval={250}
-      >
-        {({ currentDepth }) => (
+    <ControlPanel
+      maxDepth={360}
+      defaultDepth={120}
+      defaultInterval={250}
+      extraControls={<span />}
+    >
+      {({ currentDepth }) => (
+        <>
+          <MandelbrotControls
+            bailout={bailout}
+            setBailout={setBailout}
+            setView={setView}
+          />
           <MandelbrotCanvas
             view={view}
             setView={setView}
@@ -28,17 +34,8 @@ export default function MandelbrotSet() {
             isMobile={isMobile}
             background={color.bgPage}
           />
-        )}
-      </ControlPanel>
-      <MandelbrotControls
-        color={color}
-        shape={shape}
-        pageStyles={pageStyles}
-        isMobile={isMobile}
-        bailout={bailout}
-        setBailout={setBailout}
-        setView={setView}
-      />
-    </main>
+        </>
+      )}
+    </ControlPanel>
   );
 }
