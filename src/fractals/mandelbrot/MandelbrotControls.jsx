@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { useTheme } from "../../styles/pageStyles";
-import { INITIAL_MANDELBROT_VIEW } from "./mandelbrotMath";
 
 const DEFAULT_BAILOUT = 2;
 
@@ -36,7 +35,7 @@ function Slider({ label, value, min, max, step, format, onChange, styles }) {
  * マンデルブロ集合の表示パラメータ調整パネル。
  * バーンズリーのシダ（FernEditor）と同じ構造で構成する。
  */
-export default function MandelbrotControls({ bailout, setBailout, setView }) {
+export default function MandelbrotControls({ bailout, setBailout, onZoomIn, onZoomOut, onResetView }) {
   const isMobile = useIsMobile();
   const [isMinimized, setIsMinimized] = useState(false);
   const { color, shape, pageStyles } = useTheme();
@@ -85,7 +84,7 @@ export default function MandelbrotControls({ bailout, setBailout, setView }) {
 
   function handleReset() {
     setBailout(DEFAULT_BAILOUT);
-    setView(INITIAL_MANDELBROT_VIEW);
+    onResetView();
   }
 
   return (
@@ -128,25 +127,13 @@ export default function MandelbrotControls({ bailout, setBailout, setView }) {
           />
 
           <div style={s.buttonRow}>
-            <button
-              type="button"
-              onClick={() => setView((view) => ({ ...view, width: Math.max(0.0008, view.width * 0.75) }))}
-              style={s.button}
-            >
+            <button type="button" onClick={onZoomIn} style={s.button}>
               拡大
             </button>
-            <button
-              type="button"
-              onClick={() => setView((view) => ({ ...view, width: Math.min(8, view.width * 1.3) }))}
-              style={s.outlineBtn}
-            >
+            <button type="button" onClick={onZoomOut} style={s.outlineBtn}>
               縮小
             </button>
-            <button
-              type="button"
-              onClick={() => setView(INITIAL_MANDELBROT_VIEW)}
-              style={s.outlineBtn}
-            >
+            <button type="button" onClick={onResetView} style={s.outlineBtn}>
               表示リセット
             </button>
           </div>

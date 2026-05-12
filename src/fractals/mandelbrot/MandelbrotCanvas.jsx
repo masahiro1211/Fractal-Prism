@@ -1,129 +1,123 @@
-import { useEffect, useRef } from "react";
-import { renderMandelbrot } from "./mandelbrotMath";
+import { Canvas, useThree } from "@react-three/fiber";
+import { OrbitControls } from "@react-three/drei";
+import { useEffect, useMemo, useRef } from "react";
+import * as THREE from "three";
+import { vertexShader, fragmentShader } from "./mandelbrotShader";
+import { INITIAL_MANDELBROT_VIEW } from "./mandelbrotMath";
+
+// 最大ズームアウト(view.width=8)でも余裕で覆える大きさ。
+// 頂点数は4のままなので大きくしても描画コストは増えない。
+const PLANE_SIZE = 1000;
+
+function MandelbrotMesh({ maxIter, bailout }) {
+  const matRef = useRef(null);
+
+  const uniforms = useMemo(
+    () => ({
+      uMaxIterF: { value: 1.0 },
+      uBailout: { value: 2.0 },
+    }),
+    []
+  );
+
+  useEffect(() => {
+    if (!matRef.current) return;
+    matRef.current.uniforms.uMaxIterF.value = Math.max(1, maxIter);
+    matRef.current.uniforms.uBailout.value = bailout;
+  }, [maxIter, bailout]);
+
+  return (
+    <mesh>
+      <planeGeometry args={[PLANE_SIZE, PLANE_SIZE]} />
+      <shaderMaterial
+        ref={matRef}
+        vertexShader={vertexShader}
+        fragmentShader={fragmentShader}
+        uniforms={uniforms}
+      />
+    </mesh>
+  );
+}
+
+// カメラとキャンバスサイズへの ref を上層に渡しつつ、初回描画時に
+// 「マンデルブロ集合全体が見える」初期ズームを計算してカメラに反映する。
+// three.js オブジェクトはミュータブルが前提なので、useThree 返り値を直接
+// 書き換える方針で eslint(react-hooks/immutability) は抑制する。
+function Setup({ cameraRef, canvasSizeRef }) {
+  const three = useThree();
+  const initializedRef = useRef(false);
+
+  useEffect(() => {
+    const { camera, size } = three;
+    cameraRef.current = camera;
+    canvasSizeRef.current = size;
+
+    if (initializedRef.current || size.width === 0) return;
+    // eslint-disable-next-line react-hooks/immutability
+    camera.zoom = size.width / INITIAL_MANDELBROT_VIEW.width;
+    camera.position.set(
+      INITIAL_MANDELBROT_VIEW.centerX,
+      INITIAL_MANDELBROT_VIEW.centerY,
+      10
+    );
+    camera.updateProjectionMatrix();
+    initializedRef.current = true;
+  });
+
+  return null;
+}
 
 export default function MandelbrotCanvas({
-  view,
-  setView,
   maxIter,
   bailout,
   isMobile,
   background,
+  cameraRef,
+  controlsRef,
+  canvasSizeRef,
 }) {
-  const canvasRef = useRef(null);
-  const dragRef = useRef(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return undefined;
-
-    let raf = 0;
-
-    function resizeAndRender() {
-      const rect = canvas.getBoundingClientRect();
-      const dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1 : 1.5);
-      const rawWidth = Math.max(1, Math.floor(rect.width * dpr));
-      const rawHeight = Math.max(1, Math.floor(rect.height * dpr));
-      const pixelLimit = isMobile ? 520000 : 900000;
-      const scale = Math.min(1, Math.sqrt(pixelLimit / (rawWidth * rawHeight)));
-      const nextWidth = Math.max(1, Math.floor(rawWidth * scale));
-      const nextHeight = Math.max(1, Math.floor(rawHeight * scale));
-
-      if (canvas.width !== nextWidth || canvas.height !== nextHeight) {
-        canvas.width = nextWidth;
-        canvas.height = nextHeight;
-      }
-
-      renderMandelbrot(canvas, view, maxIter, bailout);
-    }
-
-    function scheduleRender() {
-      window.cancelAnimationFrame(raf);
-      raf = window.requestAnimationFrame(resizeAndRender);
-    }
-
-    scheduleRender();
-    window.addEventListener("resize", scheduleRender);
-
-    return () => {
-      window.cancelAnimationFrame(raf);
-      window.removeEventListener("resize", scheduleRender);
-    };
-  }, [bailout, isMobile, maxIter, view]);
-
-  function handleWheel(event) {
-    event.preventDefault();
-    zoomAt(event.clientX, event.clientY, event.deltaY > 0 ? 1.18 : 0.84);
-  }
-
-  function zoomAt(clientX, clientY, zoom) {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const px = (clientX - rect.left) / rect.width;
-    const py = (clientY - rect.top) / rect.height;
-    const viewHeight = view.width * rect.height / rect.width;
-    const worldX = view.centerX + (px - 0.5) * view.width;
-    const worldY = view.centerY + (py - 0.5) * viewHeight;
-    const nextWidth = Math.min(8, Math.max(0.0008, view.width * zoom));
-    const nextHeight = nextWidth * rect.height / rect.width;
-
-    setView({
-      centerX: worldX - (px - 0.5) * nextWidth,
-      centerY: worldY - (py - 0.5) * nextHeight,
-      width: nextWidth,
-    });
-  }
-
-  function handlePointerDown(event) {
-    event.currentTarget.setPointerCapture(event.pointerId);
-    dragRef.current = {
-      pointerId: event.pointerId,
-      x: event.clientX,
-      y: event.clientY,
-      view,
-    };
-  }
-
-  function handlePointerMove(event) {
-    const drag = dragRef.current;
-    const canvas = canvasRef.current;
-    if (!drag || !canvas || drag.pointerId !== event.pointerId) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const dx = event.clientX - drag.x;
-    const dy = event.clientY - drag.y;
-    const viewHeight = drag.view.width * rect.height / rect.width;
-
-    setView({
-      centerX: drag.view.centerX - dx / rect.width * drag.view.width,
-      centerY: drag.view.centerY - dy / rect.height * viewHeight,
-      width: drag.view.width,
-    });
-  }
-
-  function handlePointerUp(event) {
-    if (dragRef.current?.pointerId === event.pointerId) {
-      dragRef.current = null;
-    }
-  }
-
   return (
-    <canvas
-      ref={canvasRef}
-      onWheel={handleWheel}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerUp}
+    <Canvas
+      orthographic
+      camera={{
+        position: [
+          INITIAL_MANDELBROT_VIEW.centerX,
+          INITIAL_MANDELBROT_VIEW.centerY,
+          10,
+        ],
+        zoom: 400,
+        near: 0.1,
+        far: 100,
+      }}
       style={{
         width: "100vw",
         height: "100dvh",
-        display: "block",
         background,
-        cursor: "grab",
         touchAction: "none",
       }}
-    />
+      dpr={[1, isMobile ? 1.25 : 2]}
+    >
+      <Setup cameraRef={cameraRef} canvasSizeRef={canvasSizeRef} />
+      <MandelbrotMesh maxIter={maxIter} bailout={bailout} />
+      <OrbitControls
+        ref={controlsRef}
+        target={[
+          INITIAL_MANDELBROT_VIEW.centerX,
+          INITIAL_MANDELBROT_VIEW.centerY,
+          0,
+        ]}
+        enableRotate={false}
+        screenSpacePanning
+        mouseButtons={{
+          LEFT: THREE.MOUSE.PAN,
+          MIDDLE: THREE.MOUSE.DOLLY,
+          RIGHT: THREE.MOUSE.PAN,
+        }}
+        touches={{
+          ONE: THREE.TOUCH.PAN,
+          TWO: THREE.TOUCH.DOLLY_PAN,
+        }}
+      />
+    </Canvas>
   );
 }
