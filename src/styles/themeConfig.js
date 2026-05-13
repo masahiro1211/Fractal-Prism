@@ -39,12 +39,16 @@ export const colorDark = {
   bgCard:        'rgba(0, 255, 200, 0.04)',
 }
 colorDark.bgGenPage = {
-  backgroundColor: 'rgba(2, 2, 39, 0.64)',
-  backgroundImage: [
-    'linear-gradient(0deg, transparent 31px, rgba(0, 255, 200, 0.30) 32px)',
-    'linear-gradient(90deg, transparent 31px, rgba(0,255,200,0.30) 32px)',
-  ].join(','),
-  backgroundSize: '32px 32px',
+  backgroundColor: '#020227',
+}
+colorDark.sceneGrid = {
+  cell: '#24c6c6',
+  axisX: '#ff7a7a',
+  axisY: '#39ffe2',
+  axisZ: '#75b8ff',
+  opacity: 0.32,
+  axisOpacity: 0.78,
+  fog: '#020227',
 }
 
 export const colorLight = {
@@ -85,12 +89,16 @@ export const colorLight = {
   bgCard:        '#f5efda',
 }
 colorLight.bgGenPage = {
-  backgroundColor: 'rgba(252, 235, 222, 0.85)',
-  backgroundImage: [
-    'linear-gradient(0deg, transparent 31px, rgba(160,80,40,0.12) 32px)',
-    'linear-gradient(90deg, transparent 31px, rgba(160,80,40,0.12) 32px)',
-  ].join(','),
-  backgroundSize: '32px 32px',
+  backgroundColor: '#fceee4',
+}
+colorLight.sceneGrid = {
+  cell: '#c97861',
+  axisX: '#cf3f35',
+  axisY: '#0f9e78',
+  axisZ: '#2f72d0',
+  opacity: 0.36,
+  axisOpacity: 0.82,
+  fog: '#fceee4',
 }
 
 // ── shapeトークン定義 ─────────────────────────────────────────
