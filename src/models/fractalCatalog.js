@@ -7,7 +7,7 @@
  * 通常のテンプレートリテラルでは \frac の \f がフォームフィード文字に
  * 変換されてしまい、KaTeX がパースできなくなる。
  */
-const mdModules = import.meta.glob('../fractals/**/*.md', {
+const mdModules = import.meta.glob('../intros/**/*.md', {
         eager: true,
         query: '?raw',
         import: 'default',
@@ -23,7 +23,7 @@ const mdModules = import.meta.glob('../fractals/**/*.md', {
  */
 console.log(Object.keys(mdModules))
 function md(path, level, field) {
-        const key = `../fractals/${path}/${level}/${field}.md`
+        const key = `../intros/${path}/${level}/${field}.md`
         const content = mdModules[key]
         if(content === undefined) {
                 console.warn(`[fractalCatalog] MD not found: ${key}`)
@@ -70,6 +70,26 @@ export const fractalCatalog = [
         feature:     md('menger', 'advanced', 'feature'),
         application: md('menger', 'advanced', 'application'),
         howTo:       md('menger', 'advanced', 'howTo'),
+      },
+    },
+  },
+  {
+    path: 'mandelbrot',
+    name: 'マンデルブロ集合',
+    image: '/images/mandelbrot.png',  
+    meshColor: { dark: '#9ad0e6', light: '#3a7a9e' },
+    intro: {
+      beginner: {
+        overview:    md('mandelbrot', 'beginner', 'overview'),
+        feature:     md('mandelbrot', 'beginner', 'feature'),
+        application: md('mandelbrot', 'beginner', 'application'),
+        howTo:       md('mandelbrot', 'beginner', 'howTo'),
+      },
+      advanced: {
+        overview:    md('mandelbrot', 'advanced', 'overview'),
+        feature:     md('mandelbrot', 'advanced', 'feature'),
+        application: md('mandelbrot', 'advanced', 'application'),
+        howTo:       md('mandelbrot', 'advanced', 'howTo'),
       },
     },
   },
