@@ -38,6 +38,14 @@ export const colorDark = {
   bgInfo:        'rgba(0, 255, 200, 0.04)',
   bgCard:        'rgba(0, 255, 200, 0.04)',
 }
+colorDark.bgGenPage = {
+  backgroundColor: 'rgba(2, 2, 39, 0.64)',
+  backgroundImage: [
+    'linear-gradient(0deg, transparent 31px, rgba(0, 255, 200, 0.30) 32px)',
+    'linear-gradient(90deg, transparent 31px, rgba(0,255,200,0.30) 32px)',
+  ].join(','),
+  backgroundSize: '32px 32px',
+}
 
 export const colorLight = {
   bgPage:        '#fdf6f0',
@@ -75,6 +83,14 @@ export const colorLight = {
   bgPanelWide:   '#f8f7e9d2',
   bgInfo:        '#fcecdf',
   bgCard:        '#f5efda',
+}
+colorLight.bgGenPage = {
+  backgroundColor: 'rgba(252, 235, 222, 0.85)',
+  backgroundImage: [
+    'linear-gradient(0deg, transparent 31px, rgba(160,80,40,0.12) 32px)',
+    'linear-gradient(90deg, transparent 31px, rgba(160,80,40,0.12) 32px)',
+  ].join(','),
+  backgroundSize: '32px 32px',
 }
 
 // ── shapeトークン定義 ─────────────────────────────────────────
