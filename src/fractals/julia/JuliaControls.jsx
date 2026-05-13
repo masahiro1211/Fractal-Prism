@@ -77,7 +77,7 @@ export default function JuliaControls({
     value:        { color: color.cpText, fontSize: 11 },
     slider:       { width: "100%", accentColor: color.accent1 },
     buttonRow:    { display: "flex", gap: 6, flexWrap: "wrap", marginTop: 4 },
-    presetRow:    { display: "flex", gap: 6, flexWrap: "wrap", margin: "2px 0 10px" },
+    presetRow:    { display: "flex", gap: 6, flexWrap: "wrap", margin: "0 0 12px" },
     button:       { ...pageStyles.primaryButton, padding: "6px 10px", fontSize: 11 },
     outlineBtn:   { ...pageStyles.outlineButton, padding: "6px 10px", fontSize: 11, textDecoration: "none" },
     hint:         { margin: "10px 0 0", color: color.cpText, fontSize: 11, lineHeight: 1.45 },
@@ -132,6 +132,19 @@ export default function JuliaControls({
 
       {!isMinimized && (
         <>
+          <div style={s.presetRow}>
+            {JULIA_PRESETS.map((preset) => (
+              <button
+                key={preset.name}
+                type="button"
+                onClick={() => onPresetSelect(preset.c)}
+                style={s.outlineBtn}
+              >
+                {preset.name}
+              </button>
+            ))}
+          </div>
+
           <Slider
             label="発散判定半径"
             value={bailout}
@@ -156,19 +169,6 @@ export default function JuliaControls({
             onChange={setCIm}
             styles={s}
           />
-
-          <div style={s.presetRow}>
-            {JULIA_PRESETS.map((preset) => (
-              <button
-                key={preset.name}
-                type="button"
-                onClick={() => onPresetSelect(preset.c)}
-                style={s.outlineBtn}
-              >
-                {preset.name}
-              </button>
-            ))}
-          </div>
 
           <div style={s.buttonRow}>
             <button type="button" onClick={onZoomIn} style={s.button}>
