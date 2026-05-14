@@ -1,4 +1,5 @@
-import { useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { Line } from "@react-three/drei";
 import * as THREE from "three";
 import FractalScene from "../../components/FractalScene";
 import ControlPanel from "../../components/ControlPanel";
@@ -16,6 +17,7 @@ import {
 
 const MODEL = getFractalCatalogByPath("lorenz");
 const TOTAL_POINTS = MAX_STEPS * POINTS_PER_STEP;
+const LINE_WIDTH = 1.25;
 
 function LorenzCurve({ visibleCount, params, color, accentColor, showHead }) {
   const positions = useMemo(
@@ -40,20 +42,20 @@ function LorenzCurve({ visibleCount, params, color, accentColor, showHead }) {
     return arr;
   }, [color, accentColor]);
 
-  const geometry = useMemo(() => {
-    const g = new THREE.BufferGeometry();
-    g.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-    g.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-    return g;
-  }, [positions, colors]);
-
   const clampedVisibleCount = Math.min(TOTAL_POINTS, Math.max(2, visibleCount));
 
-  useEffect(() => () => geometry.dispose(), [geometry]);
+  const { linePoints, lineColors } = useMemo(() => {
+    const points = [];
+    const vertexColors = [];
 
-  useLayoutEffect(() => {
-    geometry.setDrawRange(0, clampedVisibleCount);
-  }, [geometry, clampedVisibleCount]);
+    for (let i = 0; i < clampedVisibleCount; i++) {
+      const index = i * 3;
+      points.push([positions[index], positions[index + 1], positions[index + 2]]);
+      vertexColors.push([colors[index], colors[index + 1], colors[index + 2]]);
+    }
+
+    return { linePoints: points, lineColors: vertexColors };
+  }, [positions, colors, clampedVisibleCount]);
 
   const headIndex = Math.min(clampedVisibleCount - 1, TOTAL_POINTS - 1);
   const headPos = [
@@ -64,10 +66,14 @@ function LorenzCurve({ visibleCount, params, color, accentColor, showHead }) {
 
   return (
     <>
-      <line>
-        <primitive object={geometry} attach="geometry" />
-        <lineBasicMaterial vertexColors linewidth={1} />
-      </line>
+      <Line
+        points={linePoints}
+        vertexColors={lineColors}
+        lineWidth={LINE_WIDTH}
+        transparent
+        opacity={0.9}
+        depthWrite={false}
+      />
       {showHead && (
         <mesh position={headPos}>
           <sphereGeometry args={[0.03, 16, 16]} />
@@ -96,7 +102,7 @@ export default function LorenzAttractor() {
   return (
     <ControlPanel
       maxDepth={MAX_STEPS}
-      defaultDepth={60}
+      defaultDepth={80}
       defaultInterval={130}
       extraControls={
         <PanelCheckbox label="現在地マーカー" checked={showHead} onChange={setShowHead} />

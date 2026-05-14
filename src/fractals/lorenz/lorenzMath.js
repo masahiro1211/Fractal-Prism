@@ -2,11 +2,11 @@ export const DEFAULT_LORENZ = {
   sigma: 10,
   rho: 28,
   beta: 8 / 3,
-  dt: 0.01,
 };
 
-export const POINTS_PER_STEP = 200;
-export const MAX_STEPS = 90;
+export const POINTS_PER_STEP = 1000;
+export const MAX_STEPS = 120;
+export const INTEGRATION_DT = 0.001;
 export const TRAJECTORY_SCALE = 0.04;
 export const TRAJECTORY_Z_OFFSET = -25;
 export const INITIAL_POSITION = { x: 0.01, y: 0, z: 0 };
@@ -20,7 +20,7 @@ function lorenzRHS(p, params) {
 }
 
 export function rk4Step(p, params) {
-  const dt = params.dt;
+  const dt = INTEGRATION_DT;
   const k1 = lorenzRHS(p, params);
   const k2 = lorenzRHS({
     x: p.x + (dt / 2) * k1.x,
@@ -61,8 +61,8 @@ export function generateTrajectory(totalPoints, params) {
 }
 
 export const LORENZ_PRESETS = [
-  { name: 'カオス（標準）', params: { sigma: 10, rho: 28, beta: 8 / 3, dt: 0.01 } },
-  { name: '周期軌道', params: { sigma: 10, rho: 99.96, beta: 8 / 3, dt: 0.005 } },
-  { name: '収束', params: { sigma: 10, rho: 15, beta: 8 / 3, dt: 0.01 } },
-  { name: '対称破れ', params: { sigma: 10, rho: 160, beta: 8 / 3, dt: 0.003 } },
+  { name: 'カオス（標準）', params: { sigma: 10, rho: 28, beta: 8 / 3 } },
+  { name: '周期軌道', params: { sigma: 10, rho: 99.96, beta: 8 / 3 } },
+  { name: '収束', params: { sigma: 10, rho: 15, beta: 8 / 3 } },
+  { name: '対称破れ', params: { sigma: 10, rho: 160, beta: 8 / 3 } },
 ];

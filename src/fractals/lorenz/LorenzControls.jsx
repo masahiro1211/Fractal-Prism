@@ -23,7 +23,7 @@ function Slider({ label, value, min, max, step, format, onChange, styles }) {
 }
 
 function isSameParams(a, b) {
-  return ["sigma", "rho", "beta", "dt"].every(
+  return ["sigma", "rho", "beta"].every(
     (key) => Math.abs(a[key] - b[key]) < 0.0001
   );
 }
@@ -157,16 +157,6 @@ export default function LorenzControls({
             step={0.01}
             format={(v) => v.toFixed(2)}
             onChange={(v) => updateParam("beta", v)}
-            styles={s}
-          />
-          <Slider
-            label="dt"
-            value={params.dt}
-            min={0.001}
-            max={0.02}
-            step={0.001}
-            format={(v) => v.toFixed(3)}
-            onChange={(v) => updateParam("dt", v)}
             styles={s}
           />
         </>
