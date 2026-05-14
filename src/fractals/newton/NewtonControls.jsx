@@ -1,16 +1,8 @@
 import { useState } from "react";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { useTheme } from "../../styles/pageStyles";
+import { DEFAULT_NEWTON, NEWTON_POLY_PRESETS } from "./newtonMath";
 
-const DEFAULT_BAILOUT = 2;
-
-/* =========================
-   コンポーネント
-   ========================= */
-
-/**
- * 1スライダー入力。ラベル・値表示・range をひとまとめにする。
- */
 function Slider({ label, value, min, max, step, format, onChange, styles }) {
   return (
     <div style={styles.field}>
@@ -31,19 +23,23 @@ function Slider({ label, value, min, max, step, format, onChange, styles }) {
   );
 }
 
-/**
- * マンデルブロ集合の表示パラメータ調整パネル。
- * バーンズリーのシダ（FernEditor）と同じ構造で構成する。
- */
-export default function MandelbrotControls({ bailout, setBailout, onZoomIn, onZoomOut, onResetView }) {
+export default function NewtonControls({
+  polyMode,
+  setPolyMode,
+  aRe,
+  setARe,
+  aIm,
+  setAIm,
+  tol,
+  setTol,
+  onZoomIn,
+  onZoomOut,
+  onResetView,
+}) {
   const isMobile = useIsMobile();
   const [isMinimized, setIsMinimized] = useState(false);
   const [pressedZoom, setPressedZoom] = useState(null);
   const { color, shape, pageStyles } = useTheme();
-
-  /* =========================
-     調整パネル スタイル
-     ========================= */
 
   const basePanel = {
     position: "absolute",
@@ -56,7 +52,7 @@ export default function MandelbrotControls({ bailout, setBailout, onZoomIn, onZo
   };
 
   const desktopPanel = {
-    panel:        { ...basePanel, top: 16, right: 16, padding: "12px 14px", width: 240, fontSize: 12 },
+    panel:        { ...basePanel, top: 16, right: 16, padding: "12px 14px", width: 260, fontSize: 12 },
     header:       { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, paddingBottom: 8, borderBottom: `1px solid ${color.cpSubtle}`, marginBottom: 10 },
     title:        { fontWeight: 700, fontSize: 12, color: color.cpText },
     resetBtn:     { background: color.cpReset, color: color.cpResetText, border: "none", borderRadius: shape.radiusSm, padding: "4px 9px", fontSize: 11, cursor: "pointer" },
@@ -66,7 +62,9 @@ export default function MandelbrotControls({ bailout, setBailout, onZoomIn, onZo
     value:        { color: color.cpText, fontSize: 11 },
     slider:       { width: "100%", accentColor: color.accent1 },
     buttonRow:    { display: "flex", gap: 6, flexWrap: "wrap", marginTop: 4 },
-    button:       { ...pageStyles.primaryButton, padding: "6px 10px", fontSize: 11 },
+    presetRow:    { display: "flex", flexDirection: "column", gap: 6, margin: "0 0 12px" },
+    presetButton: { ...pageStyles.outlineButton, padding: "6px 10px", fontSize: 11, textAlign: "left", width: "100%" },
+    presetActive: { ...pageStyles.primaryButton, padding: "6px 10px", fontSize: 11, textAlign: "left", width: "100%" },
     outlineBtn:   { padding: "6px 10px", fontSize: 11, cursor: "pointer", borderRadius: shape.radiusSm, border: `1px solid ${color.accent1}`, background: "transparent", color: color.accent1 },
     outlineBtnon: { padding: "6px 10px", fontSize: 11, cursor: "pointer", borderRadius: shape.radiusSm, border: `1px solid ${color.accent1}`, background: color.accent1, color: color.accent1Text ?? "#fff" },
     hint:         { margin: "10px 0 0", color: color.cpText, fontSize: 11, lineHeight: 1.45 },
@@ -77,37 +75,43 @@ export default function MandelbrotControls({ bailout, setBailout, onZoomIn, onZo
     panel:        { ...basePanel, bottom: 12, left: 12, right: 12, padding: "8px 10px", fontSize: 11, maxHeight: "45vh", overflowY: "auto" },
     title:        { fontWeight: 700, fontSize: 11, color: color.cpText },
     field:        { marginBottom: 6 },
-    button:       { ...pageStyles.primaryButton, padding: "5px 9px", fontSize: 11 },
+    presetRow:    { display: "flex", flexDirection: "column", gap: 5, margin: "0 0 10px" },
+    presetButton: { ...pageStyles.outlineButton, padding: "5px 9px", fontSize: 11, textAlign: "left", width: "100%" },
+    presetActive: { ...pageStyles.primaryButton, padding: "5px 9px", fontSize: 11, textAlign: "left", width: "100%" },
     outlineBtn:   { padding: "5px 9px", fontSize: 11, cursor: "pointer", borderRadius: shape.radiusSm, border: `1px solid ${color.accent1}`, background: "transparent", color: color.accent1 },
     outlineBtnon: { padding: "5px 9px", fontSize: 11, cursor: "pointer", borderRadius: shape.radiusSm, border: `1px solid ${color.accent1}`, background: color.accent1, color: color.accent1Text ?? "#fff" },
     hint:         { margin: "8px 0 0", color: color.cpText, fontSize: 10, lineHeight: 1.45 },
   };
 
   const s = isMobile ? mobilePanel : desktopPanel;
+  const tolSliderValue = Math.log10(tol);
 
   function handleReset() {
-    setBailout(DEFAULT_BAILOUT);
+    setPolyMode(DEFAULT_NEWTON.polyMode);
+    setARe(DEFAULT_NEWTON.aRe);
+    setAIm(DEFAULT_NEWTON.aIm);
+    setTol(DEFAULT_NEWTON.tol);
     onResetView();
   }
 
   return (
     <div style={s.panel}>
       <div style={s.header}>
-        <span style={s.title}>マンデルブロ集合</span>
+        <span style={s.title}>ニュートンフラクタル</span>
         <button
           onClick={() => setIsMinimized((v) => !v)}
           style={{
-            background: 'transparent',
+            background: "transparent",
             border: `1px solid ${color.cpBorder}`,
             borderRadius: shape.radiusSm,
             color: color.cpText,
-            cursor: 'pointer',
+            cursor: "pointer",
             fontSize: 11,
-            padding: '2px 7px',
+            padding: "2px 7px",
             lineHeight: 1,
           }}
         >
-          {isMinimized ? '▲' : '▼'}
+          {isMinimized ? "▲" : "▼"}
         </button>
         <button
           type="button"
@@ -120,12 +124,48 @@ export default function MandelbrotControls({ bailout, setBailout, onZoomIn, onZo
 
       {!isMinimized && (
         <>
+          <div style={s.presetRow}>
+            {NEWTON_POLY_PRESETS.map((preset) => (
+              <button
+                key={preset.mode}
+                type="button"
+                title={preset.description}
+                onClick={() => setPolyMode(preset.mode)}
+                style={polyMode === preset.mode ? s.presetActive : s.presetButton}
+              >
+                {preset.name}
+              </button>
+            ))}
+          </div>
+
           <Slider
-            label="発散判定半径"
-            value={bailout}
-            min={1.2} max={2} step={0.1}
-            format={(v) => v.toFixed(1)}
-            onChange={setBailout}
+            label="緩和係数 実部 aRe"
+            value={aRe}
+            min={0.2}
+            max={1.8}
+            step={0.01}
+            format={(v) => v.toFixed(2)}
+            onChange={setARe}
+            styles={s}
+          />
+          <Slider
+            label="緩和係数 虚部 aIm"
+            value={aIm}
+            min={-0.8}
+            max={0.8}
+            step={0.01}
+            format={(v) => v.toFixed(2)}
+            onChange={setAIm}
+            styles={s}
+          />
+          <Slider
+            label="収束判定 tol"
+            value={tolSliderValue}
+            min={-4}
+            max={-2}
+            step={0.01}
+            format={() => tol.toExponential(0)}
+            onChange={(v) => setTol(10 ** v)}
             styles={s}
           />
 
@@ -160,7 +200,7 @@ export default function MandelbrotControls({ bailout, setBailout, onZoomIn, onZo
           </div>
 
           <p style={s.hint}>
-            ドラッグで移動、ホイールで拡大縮小できます。
+            a=1+0i のとき標準ニュートン法。a を動かすと収束領域が歪みます。
           </p>
         </>
       )}
