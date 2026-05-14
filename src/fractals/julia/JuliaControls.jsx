@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { useTheme } from "../../styles/pageStyles";
+import { DEFAULT_JULIA_C, JULIA_PRESETS } from "./juliaMath";
 
 const DEFAULT_BAILOUT = 2;
 
@@ -32,13 +33,31 @@ function Slider({ label, value, min, max, step, format, onChange, styles }) {
 }
 
 /**
- * マンデルブロ集合の表示パラメータ調整パネル。
- * バーンズリーのシダ（FernEditor）と同じ構造で構成する。
+ * ジュリア集合の表示パラメータ調整パネル。
+ * マンデルブロ集合と同じ構造で構成する。
  */
-export default function MandelbrotControls({ bailout, setBailout, onZoomIn, onZoomOut, onResetView }) {
+export default function JuliaControls({
+  bailout,
+  setBailout,
+  cRe,
+  setCRe,
+  cIm,
+  setCIm,
+  onPresetSelect,
+  onZoomIn,
+  onZoomOut,
+  onResetView,
+}) {
   const isMobile = useIsMobile();
   const [isMinimized, setIsMinimized] = useState(false);
   const [pressedZoom, setPressedZoom] = useState(null);
+  const [activePresetName, setActivePresetName] = useState(() => {
+    // 初期値: DEFAULT_JULIA_C と一致するプリセットを選択済みにする
+    const EPSILON = 0.0001;
+    return JULIA_PRESETS.find(
+      (p) => Math.abs(p.c[0] - DEFAULT_JULIA_C.re) < EPSILON && Math.abs(p.c[1] - DEFAULT_JULIA_C.im) < EPSILON
+    )?.name ?? null;
+  });
   const { color, shape, pageStyles } = useTheme();
 
   /* =========================
@@ -66,6 +85,7 @@ export default function MandelbrotControls({ bailout, setBailout, onZoomIn, onZo
     value:        { color: color.cpText, fontSize: 11 },
     slider:       { width: "100%", accentColor: color.accent1 },
     buttonRow:    { display: "flex", gap: 6, flexWrap: "wrap", marginTop: 4 },
+    presetRow:    { display: "flex", gap: 6, flexWrap: "wrap", margin: "0 0 12px" },
     button:       { ...pageStyles.primaryButton, padding: "6px 10px", fontSize: 11 },
     outlineBtn:   { padding: "6px 10px", fontSize: 11, cursor: "pointer", borderRadius: shape.radiusSm, border: `1px solid ${color.accent1}`, background: "transparent", color: color.accent1 },
     outlineBtnon: { padding: "6px 10px", fontSize: 11, cursor: "pointer", borderRadius: shape.radiusSm, border: `1px solid ${color.accent1}`, background: color.accent1, color: color.accent1Text ?? "#fff" },
@@ -87,13 +107,21 @@ export default function MandelbrotControls({ bailout, setBailout, onZoomIn, onZo
 
   function handleReset() {
     setBailout(DEFAULT_BAILOUT);
+    setCRe(DEFAULT_JULIA_C.re);
+    setCIm(DEFAULT_JULIA_C.im);
     onResetView();
+    // 初期プリセットに戻す
+    const EPSILON = 0.0001;
+    const initialPreset = JULIA_PRESETS.find(
+      (p) => Math.abs(p.c[0] - DEFAULT_JULIA_C.re) < EPSILON && Math.abs(p.c[1] - DEFAULT_JULIA_C.im) < EPSILON
+    );
+    setActivePresetName(initialPreset?.name ?? null);
   }
 
   return (
     <div style={s.panel}>
       <div style={s.header}>
-        <span style={s.title}>マンデルブロ集合</span>
+        <span style={s.title}>ジュリア集合</span>
         <button
           onClick={() => setIsMinimized((v) => !v)}
           style={{
@@ -120,12 +148,44 @@ export default function MandelbrotControls({ bailout, setBailout, onZoomIn, onZo
 
       {!isMinimized && (
         <>
+          <div style={s.presetRow}>
+            {JULIA_PRESETS.map((preset) => (
+              <button
+                key={preset.name}
+                type="button"
+                onClick={() => { setActivePresetName(preset.name); onPresetSelect(preset.c); }}
+                style={{
+                  ...s.outlineBtn,
+                  ...(activePresetName === preset.name ? s.outlineBtnon : {}),
+                }}
+              >
+                {preset.name}
+              </button>
+            ))}
+          </div>
+
           <Slider
             label="発散判定半径"
             value={bailout}
             min={1.2} max={2} step={0.1}
             format={(v) => v.toFixed(1)}
             onChange={setBailout}
+            styles={s}
+          />
+          <Slider
+            label="実部 cRe"
+            value={cRe}
+            min={-1} max={1} step={0.001}
+            format={(v) => v.toFixed(3)}
+            onChange={(v) => { setCRe(v); setActivePresetName(null); }}
+            styles={s}
+          />
+          <Slider
+            label="虚部 cIm"
+            value={cIm}
+            min={-1} max={1} step={0.001}
+            format={(v) => v.toFixed(3)}
+            onChange={(v) => { setCIm(v); setActivePresetName(null); }}
             styles={s}
           />
 

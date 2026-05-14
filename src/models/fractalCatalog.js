@@ -94,6 +94,26 @@ export const fractalCatalog = [
     },
   },
   {
+    path: 'julia',
+    name: 'ジュリア集合',
+    image: '/images/julia.png',
+    meshColor: { dark: '#f4a3c0', light: '#9b3d63' },
+    intro: {
+      beginner: {
+        overview:    md('julia', 'beginner', 'overview'),
+        feature:     md('julia', 'beginner', 'feature'),
+        application: md('julia', 'beginner', 'application'),
+        howTo:       md('julia', 'beginner', 'howTo'),
+      },
+      advanced: {
+        overview:    md('julia', 'advanced', 'overview'),
+        feature:     md('julia', 'advanced', 'feature'),
+        application: md('julia', 'advanced', 'application'),
+        howTo:       md('julia', 'advanced', 'howTo'),
+      },
+    },
+  },
+  {
     path: 'mandelbulb',
     name: 'マンデルバルブ',
     image: '/images/mandelbulb.png',
@@ -150,6 +170,47 @@ export const fractalCatalog = [
         feature:     md('koch', 'advanced', 'feature'),
         application: md('koch', 'advanced', 'application'),
         howTo:       md('koch', 'advanced', 'howTo'),
+      },
+    },
+  },
+  {
+    path: 'dragon',
+    name: 'ドラゴン曲線',
+    image: '/images/dragon.png',
+    meshColor: { dark: '#fb923c', light: '#b45309' },
+    intro: {
+      beginner: {
+        overview:    md('dragon', 'beginner', 'overview'),
+        feature:     md('dragon', 'beginner', 'feature'),
+        application: md('dragon', 'beginner', 'application'),
+        howTo:       md('dragon', 'beginner', 'howTo'),
+      },
+      advanced: {
+        overview:    md('dragon', 'advanced', 'overview'),
+        feature:     md('dragon', 'advanced', 'feature'),
+        application: md('dragon', 'advanced', 'application'),
+        howTo:       md('dragon', 'advanced', 'howTo'),
+      },
+    },
+  },
+  {
+    path: 'pythagoras',
+    name: 'ピタゴラスの木',
+    image: '/images/pythagoras.png',
+    meshColor:       { dark: '#22c55e', light: '#2f7d32' },
+    meshAccentColor: { dark: '#fde047', light: '#b58d0b' },
+    intro: {
+      beginner: {
+        overview:    md('pythagoras', 'beginner', 'overview'),
+        feature:     md('pythagoras', 'beginner', 'feature'),
+        application: md('pythagoras', 'beginner', 'application'),
+        howTo:       md('pythagoras', 'beginner', 'howTo'),
+      },
+      advanced: {
+        overview:    md('pythagoras', 'advanced', 'overview'),
+        feature:     md('pythagoras', 'advanced', 'feature'),
+        application: md('pythagoras', 'advanced', 'application'),
+        howTo:       md('pythagoras', 'advanced', 'howTo'),
       },
     },
   },
