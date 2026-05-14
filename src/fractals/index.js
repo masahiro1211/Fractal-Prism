@@ -17,6 +17,7 @@ const componentsByPath = {
   mandelbulb: lazy(() => import('./mandelbulb/Mandelbulb')),
   koch: lazy(() => import('./koch/KochCurve')),
   dragon: lazy(() => import('./dragon/DragonCurve')),
+  pythagoras: lazy(() => import('./pythagoras/PythagorasTree')),
   hilbert: lazy(() => import('./hilbert/HilbertCurve')),
   barnsley: lazy(() => import('./barnsley/BarnsleyFern')),
 }

@@ -194,6 +194,27 @@ export const fractalCatalog = [
     },
   },
   {
+    path: 'pythagoras',
+    name: 'ピタゴラスの木',
+    image: '/images/pythagoras.png',
+    meshColor:       { dark: '#22c55e', light: '#2f7d32' },
+    meshAccentColor: { dark: '#fde047', light: '#b58d0b' },
+    intro: {
+      beginner: {
+        overview:    md('pythagoras', 'beginner', 'overview'),
+        feature:     md('pythagoras', 'beginner', 'feature'),
+        application: md('pythagoras', 'beginner', 'application'),
+        howTo:       md('pythagoras', 'beginner', 'howTo'),
+      },
+      advanced: {
+        overview:    md('pythagoras', 'advanced', 'overview'),
+        feature:     md('pythagoras', 'advanced', 'feature'),
+        application: md('pythagoras', 'advanced', 'application'),
+        howTo:       md('pythagoras', 'advanced', 'howTo'),
+      },
+    },
+  },
+  {
     path: 'barnsley',
     name: 'バーンズリーのシダ',
     image: '/images/barnsley.png',
