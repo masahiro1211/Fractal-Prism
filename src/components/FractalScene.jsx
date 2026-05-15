@@ -149,6 +149,8 @@ function SceneGrid({ color, showGrid }) {
  *                               フラクタルの重心に追従させる用途にも使える。
  *                               注: target を動かしてもカメラ位置は不変
  *                               (target 中心の球面角度だけが保たれる)。
+ *   maxDistance    : number     Optional OrbitControls zoom-out limit.
+ *   minDistance    : number     Optional OrbitControls zoom-in limit.
  *   showGrid       : boolean    グリッド表示フラグ (デフォルト true)
  *                               2Dフラクタルには false を渡す
  *
@@ -173,6 +175,8 @@ export default function FractalScene({
   children,
   cameraPosition = [3, 3, 3],
   cameraTarget = [0, 0, 0],
+  maxDistance,
+  minDistance,
   showGrid = true,
 }) {
   const { color } = useTheme();
@@ -185,7 +189,13 @@ export default function FractalScene({
         <directionalLight position={[5, 5, 5]} intensity={1} />
         <SceneGrid color={color} showGrid={showGrid} />
         {children}
-        <OrbitControls makeDefault enableDamping target={cameraTarget} />
+        <OrbitControls
+          makeDefault
+          enableDamping
+          target={cameraTarget}
+          maxDistance={maxDistance}
+          minDistance={minDistance}
+        />
       </Canvas>
     </div>
   );
